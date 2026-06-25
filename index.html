@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Clauth Hub — Acompanhamento Automatizado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      --ig-gradient-soft: linear-gradient(135deg, #fdf497 0%, #fd5949 50%, #d6249f 75%, #285AEB 100%);
+      --fb: #1877F2;
+      --bg: #000000;
+      --surface: #ffffff;
+      --text: #262626;
+      --text-light: #ffffff;
+      --muted: #8e8e8e;
+      --border: #dbdbdb;
+      --ring-size: 3px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-light);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header estilo Instagram ── */
+    .ig-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 0.85rem 1.25rem 1rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--ig-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-icon svg { width: 16px; height: 16px; fill: #fff; }
+
+    .brand-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: var(--ig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.03em;
+    }
+
+    .live-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.25rem 0.55rem;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .header-sub {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.55);
+      margin-top: 0.3rem;
+      line-height: 1.4;
+    }
+
+    .header-sub strong { color: rgba(255,255,255,0.85); font-weight: 500; }
+
+    .update-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.55rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      font-size: 0.72rem;
+      color: #4ade80;
+    }
+
+    .update-pill::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Story bar ── */
+    .story-bar-wrap {
+      padding: 1rem 0 0.5rem;
+      overflow: hidden;
+    }
+
+    .story-bar {
+      display: flex;
+      gap: 0.85rem;
+      padding: 0 1.25rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .story-bar::-webkit-scrollbar { display: none; }
+
+    .story-item {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 72px;
+      transition: transform 0.2s;
+    }
+
+    .story-item:hover { transform: scale(1.05); }
+    .story-item.active .story-ring { opacity: 1; transform: scale(1.08); }
+
+    .story-ring {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      padding: 3px;
+      background: var(--ig-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.55;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .story-item.active .story-ring,
+    .story-item:hover .story-ring { opacity: 1; }
+
+    .story-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1a1a1a;
+      border: 2.5px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .story-name {
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Carousel ── */
+    .carousel-section {
+      padding: 0.75rem 0 1.5rem;
+      position: relative;
+    }
+
+    .carousel-hint {
+      text-align: center;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+
+    .carousel-viewport {
+      position: relative;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 0 3rem;
+    }
+
+    .carousel-track {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      gap: 0;
+      border-radius: 20px;
+    }
+
+    .carousel-track::-webkit-scrollbar { display: none; }
+
+    .store-card {
+      flex: 0 0 100%;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      padding: 0.25rem;
+    }
+
+    .card-ring {
+      border-radius: 22px;
+      padding: 3px;
+      background: var(--ig-gradient);
+      box-shadow: 0 8px 32px rgba(188, 24, 136, 0.25), 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .card-inner {
+      background: var(--surface);
+      border-radius: 19px;
+      padding: 1.25rem 1.15rem 1.15rem;
+      color: var(--text);
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--ig-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .card-identity { flex: 1; min-width: 0; }
+
+    .card-identity h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .handle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 0.1rem;
+    }
+
+    .card-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: #f5f5f5;
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-note {
+      font-size: 0.72rem;
+      color: #b45309;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .platforms {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      flex: 1;
+    }
+
+    .platform-block {
+      border-radius: 14px;
+      padding: 0.85rem;
+      border: 1px solid var(--border);
+    }
+
+    .fb-block { background: #f0f6ff; border-color: #bfdbfe; }
+    .ig-block { background: #fff5f8; border-color: #fbcfe8; }
+
+    .platform-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .fb-block .platform-label { color: var(--fb); }
+    .ig-block .platform-label { color: #c13584; }
+
+    .platform-icon { display: flex; }
+    .platform-icon svg { width: 16px; height: 16px; }
+    .fb-icon svg { fill: var(--fb); }
+    .ig-icon svg { fill: #c13584; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-item { text-align: center; }
+
+    .stat-value {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .action-btn {
+      display: block;
+      text-align: center;
+      padding: 0.55rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .action-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+    .fb-btn { background: var(--fb); color: #fff; }
+    .ig-btn {
+      background: var(--ig-gradient);
+      color: #fff;
+    }
+
+    /* ── Navigation ── */
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+      z-index: 10;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.25;
+      cursor: default;
+      transform: translateY(-50%);
+    }
+
+    .nav-prev { left: 0.25rem; }
+    .nav-next { right: 0.25rem; }
+
+    .carousel-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 1rem;
+      padding: 0 1.25rem;
+    }
+
+    .dots {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.25s;
+    }
+
+    .dot.active {
+      width: 20px;
+      border-radius: 3px;
+      background: var(--ig-gradient);
+    }
+
+    .page-counter {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+      font-weight: 500;
+    }
+
+    /* ── Info banner ── */
+    .info-banner {
+      margin: 0 1.25rem 0.5rem;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .info-banner p {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
+
+    .info-banner strong { color: rgba(255,255,255,0.85); }
+
+    /* ── Footer ── */
+    .app-footer {
+      text-align: center;
+      padding: 1.25rem 1.5rem 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 0.5rem;
+    }
+
+    .app-footer p {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.6;
+    }
+
+    .meta-logos {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.4;
+    }
+
+    .meta-logos svg { height: 18px; }
+
+    @media (max-width: 480px) {
+      .carousel-viewport { padding: 0 2.5rem; }
+      .nav-btn { width: 32px; height: 32px; font-size: 1.1rem; }
+      .card-inner { min-height: 360px; }
+    }
+
+    @media (min-width: 768px) {
+      .carousel-viewport { max-width: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="ig-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></div>
+        <span class="brand-name">Clauth Hub</span>
+      </div>
+      <span class="live-badge">Auto</span>
+    </div>
+    <h1 class="header-title">Acompanhamento de Páginas Automatizado</h1>
+    <p class="header-sub">
+      Métricas de <strong>Facebook</strong> e <strong>Instagram</strong> reunidas em um só lugar.
+      Atualização automática <strong>1x por dia</strong>.
+    </p>
+    <div class="update-pill">Última atualização: 25/06/2026 às 11:17</div>
+  </header>
+
+  <div class="story-bar-wrap">
+    <div class="story-bar" id="storyBar">
+      
+        <button class="story-item" data-goto="0" aria-label="Alerta Rio 360">
+          <span class="story-ring"><span class="story-avatar">AR</span></span>
+          <span class="story-name">Alerta</span>
+        </button>
+        <button class="story-item" data-goto="1" aria-label="Fala Zona Oeste RJ">
+          <span class="story-ring"><span class="story-avatar">FZ</span></span>
+          <span class="story-name">Fala</span>
+        </button>
+        <button class="story-item" data-goto="2" aria-label="Segurança em Pauta RJ">
+          <span class="story-ring"><span class="story-avatar">SE</span></span>
+          <span class="story-name">Segurança</span>
+        </button>
+        <button class="story-item" data-goto="3" aria-label="Jacarepaguá Agora RJ">
+          <span class="story-ring"><span class="story-avatar">JA</span></span>
+          <span class="story-name">Jacarepagu</span>
+        </button>
+        <button class="story-item" data-goto="4" aria-label="Na Pauta RJ">
+          <span class="story-ring"><span class="story-avatar">NP</span></span>
+          <span class="story-name">Na</span>
+        </button>
+        <button class="story-item" data-goto="5" aria-label="Pulso da Serra">
+          <span class="story-ring"><span class="story-avatar">PD</span></span>
+          <span class="story-name">Pulso</span>
+        </button>
+        <button class="story-item" data-goto="6" aria-label="Radar Campos">
+          <span class="story-ring"><span class="story-avatar">RC</span></span>
+          <span class="story-name">Radar</span>
+        </button>
+        <button class="story-item" data-goto="7" aria-label="Tá Rolando nos Lagos">
+          <span class="story-ring"><span class="story-avatar">TR</span></span>
+          <span class="story-name">Tá</span>
+        </button>
+        <button class="story-item" data-goto="8" aria-label="Giro Baixada RJ">
+          <span class="story-ring"><span class="story-avatar">GB</span></span>
+          <span class="story-name">Giro</span>
+        </button>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    <p>Deslize para o lado ou use as setas para navegar entre as <strong>9 páginas</strong>. Toque nos stories acima para ir direto.</p>
+  </div>
+
+  <section class="carousel-section" aria-label="Páginas monitoradas">
+    <p class="carousel-hint">← deslize para explorar →</p>
+    <div class="carousel-viewport">
+      <button class="nav-btn nav-prev" id="prevBtn" aria-label="Página anterior">‹</button>
+      <div class="carousel-track" id="carousel">
+
+        <article class="store-card" data-index="0" aria-label="Alerta Rio 360">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">AR</div>
+                <div class="card-identity">
+                  <h2>Alerta Rio 360</h2>
+                  <span class="handle">@alertario360</span>
+                </div>
+                <span class="card-badge">1/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">558</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">95</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61579501786587/posts/122109782798983392/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">7.732</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">795</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DXrf2nnDBHl/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="1" aria-label="Fala Zona Oeste RJ">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">FZ</div>
+                <div class="card-identity">
+                  <h2>Fala Zona Oeste RJ</h2>
+                  <span class="handle">@falazoeste</span>
+                </div>
+                <span class="card-badge">2/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">690</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">109</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61579533131978/posts/122108079890984437/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">6.815</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">662</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DXrpmT6AAIC/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="2" aria-label="Segurança em Pauta RJ">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">SE</div>
+                <div class="card-identity">
+                  <h2>Segurança em Pauta RJ</h2>
+                  <span class="handle">@segurancaempautarj</span>
+                </div>
+                <span class="card-badge">3/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">2.322</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">257</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61579432418259/posts/122110342358981080/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">7.382</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">606</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DXrbaHagNlU/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="3" aria-label="Jacarepaguá Agora RJ">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">JA</div>
+                <div class="card-identity">
+                  <h2>Jacarepaguá Agora RJ</h2>
+                  <span class="handle">@jacarepagua_agora</span>
+                </div>
+                <span class="card-badge">4/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">5.331</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">1.507</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61577821738768/posts/122110441844927391/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">8.192</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">646</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYC--xqAHFn/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="4" aria-label="Na Pauta RJ">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">NP</div>
+                <div class="card-identity">
+                  <h2>Na Pauta RJ</h2>
+                  <span class="handle">@napautarj</span>
+                </div>
+                <span class="card-badge">5/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">3.211</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">174</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/100066481482970/posts/1312121241013913/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">15K</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">496</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYPkeePAKRf/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="5" aria-label="Pulso da Serra">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">PD</div>
+                <div class="card-identity">
+                  <h2>Pulso da Serra</h2>
+                  <span class="handle">@pulsodaserra</span>
+                </div>
+                <span class="card-badge">6/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">5.006</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">1.534</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61576506473962/posts/122110329146883549/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">7.595</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">429</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYC93R8gMrO/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="6" aria-label="Radar Campos">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">RC</div>
+                <div class="card-identity">
+                  <h2>Radar Campos</h2>
+                  <span class="handle">@radarcampos</span>
+                </div>
+                <span class="card-badge">7/9</span>
+              </div>
+              <p class="card-note">Rodando com criativo &quot;Acorda Zona Norte&quot;</p>
+              <div class="platforms">
+                
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">3.753</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">404</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYFzU7eAN2r/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="7" aria-label="Tá Rolando nos Lagos">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">TR</div>
+                <div class="card-identity">
+                  <h2>Tá Rolando nos Lagos</h2>
+                  <span class="handle">@tarolandonoslagos</span>
+                </div>
+                <span class="card-badge">8/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+          <div class="platform-block fb-block">
+            <div class="platform-label">
+              <span class="platform-icon fb-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
+              Facebook
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">765</span>
+                <span class="stat-label">curtidas</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">788</span>
+                <span class="stat-label">falando sobre</span>
+              </div>
+            </div>
+            <a class="action-btn fb-btn" href="https://www.facebook.com/61576439211224/posts/122110167794881307/" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">4.842</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">450</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYFzu4sgEoy/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="store-card" data-index="8" aria-label="Giro Baixada RJ">
+          <div class="card-ring">
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="avatar" aria-hidden="true">GB</div>
+                <div class="card-identity">
+                  <h2>Giro Baixada RJ</h2>
+                  <span class="handle">@girobaixadarj</span>
+                </div>
+                <span class="card-badge">9/9</span>
+              </div>
+              
+              <div class="platforms">
+                
+                
+          <div class="platform-block ig-block">
+            <div class="platform-label">
+              <span class="platform-icon ig-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></span>
+              Instagram
+            </div>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <span class="stat-value">6.866</span>
+                <span class="stat-label">seguidores</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">766</span>
+                <span class="stat-label">publicações</span>
+              </div>
+            </div>
+            <a class="action-btn ig-btn" href="https://www.instagram.com/p/DYFuIMugJyl/#advertiser" target="_blank" rel="noopener noreferrer">Ver criativo</a>
+          </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+      <button class="nav-btn nav-next" id="nextBtn" aria-label="Próxima página">›</button>
+    </div>
+    <div class="carousel-footer">
+      <div class="dots" id="dots"><span class="dot active" data-goto="0"></span><span class="dot" data-goto="1"></span><span class="dot" data-goto="2"></span><span class="dot" data-goto="3"></span><span class="dot" data-goto="4"></span><span class="dot" data-goto="5"></span><span class="dot" data-goto="6"></span><span class="dot" data-goto="7"></span><span class="dot" data-goto="8"></span></div>
+      <span class="page-counter" id="counter">1 / 9</span>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <div class="meta-logos">
+      <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      <svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    </div>
+    <p>Clauth Hub · Acompanhamento automatizado de redes sociais<br>
+    Dados coletados diariamente às 08:00 · Powered by Meta platforms</p>
+  </footer>
+
+  <script>
+    (function() {
+      const carousel = document.getElementById('carousel');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const counter = document.getElementById('counter');
+      const dots = document.querySelectorAll('.dot');
+      const storyItems = document.querySelectorAll('.story-item');
+      const total = 9;
+      let current = 0;
+
+      function getCardWidth() {
+        return carousel.querySelector('.store-card').offsetWidth;
+      }
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(index, total - 1));
+        carousel.scrollTo({ left: current * getCardWidth(), behavior: 'smooth' });
+        updateUI();
+      }
+
+      function updateUI() {
+        counter.textContent = (current + 1) + ' / ' + total;
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === total - 1;
+        dots.forEach((d, i) => d.classList.toggle('active', i === current));
+        storyItems.forEach((s, i) => s.classList.toggle('active', i === current));
+        const activeStory = storyItems[current];
+        if (activeStory) {
+          activeStory.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+
+      prevBtn.addEventListener('click', () => goTo(current - 1));
+      nextBtn.addEventListener('click', () => goTo(current + 1));
+
+      dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.goto)));
+      storyItems.forEach(s => s.addEventListener('click', () => goTo(+s.dataset.goto)));
+
+      carousel.addEventListener('scroll', () => {
+        const w = getCardWidth();
+        if (!w) return;
+        const idx = Math.round(carousel.scrollLeft / w);
+        if (idx !== current) {
+          current = idx;
+          updateUI();
+        }
+      }, { passive: true });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') goTo(current - 1);
+        if (e.key === 'ArrowRight') goTo(current + 1);
+      });
+
+      let touchStartX = 0;
+      carousel.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+      }, { passive: true });
+
+      carousel.addEventListener('touchend', (e) => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+          goTo(diff > 0 ? current + 1 : current - 1);
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', () => goTo(current));
+      updateUI();
+    })();
+  </script>
+</body>
+</html>

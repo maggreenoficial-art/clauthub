@@ -1,0 +1,75 @@
+[
+  {
+    "id": 1,
+    "name": "Alerta Rio 360",
+    "instagram_handle": "alertario360",
+    "facebook_id": "61579501786587",
+    "facebook_post": "https://www.facebook.com/61579501786587/posts/122109782798983392/",
+    "instagram_post": "https://www.instagram.com/p/DXrf2nnDBHl/#advertiser"
+  },
+  {
+    "id": 2,
+    "name": "Fala Zona Oeste RJ",
+    "instagram_handle": "falazoeste",
+    "facebook_id": "61579533131978",
+    "facebook_post": "https://www.facebook.com/61579533131978/posts/122108079890984437/",
+    "instagram_post": "https://www.instagram.com/p/DXrpmT6AAIC/#advertiser"
+  },
+  {
+    "id": 3,
+    "name": "Segurança em Pauta RJ",
+    "instagram_handle": "segurancaempautarj",
+    "facebook_id": "61579432418259",
+    "facebook_post": "https://www.facebook.com/61579432418259/posts/122110342358981080/",
+    "instagram_post": "https://www.instagram.com/p/DXrbaHagNlU/#advertiser"
+  },
+  {
+    "id": 4,
+    "name": "Jacarepaguá Agora RJ",
+    "instagram_handle": "jacarepagua_agora",
+    "facebook_id": "61577821738768",
+    "facebook_post": "https://www.facebook.com/61577821738768/posts/122110441844927391/",
+    "instagram_post": "https://www.instagram.com/p/DYC--xqAHFn/#advertiser"
+  },
+  {
+    "id": 5,
+    "name": "Na Pauta RJ",
+    "subtitle": "Na Pauta | Rio de Janeiro",
+    "instagram_handle": "napautarj",
+    "facebook_id": "100066481482970",
+    "facebook_post": "https://www.facebook.com/100066481482970/posts/1312121241013913/",
+    "instagram_post": "https://www.instagram.com/p/DYPkeePAKRf/#advertiser"
+  },
+  {
+    "id": 6,
+    "name": "Pulso da Serra",
+    "instagram_handle": "pulsodaserra",
+    "facebook_id": "61576506473962",
+    "facebook_post": "https://www.facebook.com/61576506473962/posts/122110329146883549/",
+    "instagram_post": "https://www.instagram.com/p/DYC93R8gMrO/#advertiser"
+  },
+  {
+    "id": 7,
+    "name": "Radar Campos",
+    "instagram_handle": "radarcampos",
+    "note": "Rodando com criativo \"Acorda Zona Norte\"",
+    "facebook_post": null,
+    "instagram_post": "https://www.instagram.com/p/DYFzU7eAN2r/#advertiser"
+  },
+  {
+    "id": 8,
+    "name": "Tá Rolando nos Lagos",
+    "instagram_handle": "tarolandonoslagos",
+    "facebook_id": "61576439211224",
+    "facebook_post": "https://www.facebook.com/61576439211224/posts/122110167794881307/",
+    "instagram_post": "https://www.instagram.com/p/DYFzu4sgEoy/#advertiser"
+  },
+  {
+    "id": 9,
+    "name": "Giro Baixada RJ",
+    "subtitle": "@girobaixadarj",
+    "instagram_handle": "girobaixadarj",
+    "facebook_post": null,
+    "instagram_post": "https://www.instagram.com/p/DYFuIMugJyl/#advertiser"
+  }
+]
