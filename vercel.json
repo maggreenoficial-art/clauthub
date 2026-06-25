@@ -3,5 +3,8 @@
   "framework": null,
   "installCommand": "",
   "buildCommand": "",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/relatoriofinaceiro", "destination": "/relatoriofinaceiro/index.html" }
+  ]
 }

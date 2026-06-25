@@ -1,0 +1,23 @@
+{
+  "titulo": "Relatório Final de Páginas e Campanhas",
+  "investimento_extra": 10000,
+  "fonte": "Dados oficiais de mídia Meta Ads e seguidores atuais informados pela Meta.",
+  "paginas": [
+    { "nome": "Acorda Zona Norte", "instagram_handle": "acordanorterj", "investimento": 5309.57, "seguidores_relatorio": 8352, "segmentacao": "Norte Fluminense" },
+    { "nome": "Fala Oeste", "instagram_handle": "falazoeste", "investimento": 4433.65, "seguidores_relatorio": 6143, "segmentacao": "Zona Oeste do Rio de Janeiro" },
+    { "nome": "Caxias em Foco", "instagram_handle": "caxiasemfocorj", "investimento": 4393.12, "seguidores_relatorio": 7859, "segmentacao": "Duque de Caxias" },
+    { "nome": "Giro Baixada RJ", "instagram_handle": "girobaixadarj", "investimento": 4319.79, "seguidores_relatorio": 6143, "segmentacao": "Baixada Fluminense" },
+    { "nome": "Na Pauta RJ", "instagram_handle": "napautarj", "investimento": 4247.90, "seguidores_relatorio": 12700, "segmentacao": "Região Metropolitana: Niterói, São Gonçalo, Itaboraí e Maricá" },
+    { "nome": "Notícias Itaboraí", "instagram_handle": "noticiasitaborai", "investimento": 2500.00, "seguidores_relatorio": 33300, "segmentacao": "Itaboraí e Rio de Janeiro" },
+    { "nome": "Costa Verde em Pauta", "instagram_handle": "costaverdeempauta", "investimento": 2245.87, "seguidores_relatorio": 4337, "segmentacao": "Angra, Paraty, Mangaratiba e Itaguaí" },
+    { "nome": "Radar Nova Iguaçu", "instagram_handle": "radarnovaiguacu", "investimento": 2032.26, "seguidores_relatorio": 5882, "segmentacao": "Nova Iguaçu" },
+    { "nome": "Ramal da Baixada", "instagram_handle": "ramaldabaixada", "investimento": 1864.15, "seguidores_relatorio": 5930, "segmentacao": "Seropédica, Queimados e Paracambi" },
+    { "nome": "Segurança em Pauta", "instagram_handle": "segurancaempautarj", "investimento": 1839.28, "seguidores_relatorio": 6796, "segmentacao": "Rio de Janeiro capital" },
+    { "nome": "Alerta Rio 360", "instagram_handle": "alertario360", "investimento": 1784.98, "seguidores_relatorio": 7107, "segmentacao": "Rio de Janeiro capital" },
+    { "nome": "Pulso da Serra", "instagram_handle": "pulsodaserra", "investimento": 1775.29, "seguidores_relatorio": 6540, "segmentacao": "Região Serrana" },
+    { "nome": "Jacarepaguá Agora", "instagram_handle": "jacarepagua_agora", "investimento": 1493.38, "seguidores_relatorio": 7215, "segmentacao": "Jacarepaguá e bairros próximos" },
+    { "nome": "Macaé Acontece", "instagram_handle": "macaeacontece", "investimento": 1267.41, "seguidores_relatorio": 18200, "segmentacao": "Macaé e região" },
+    { "nome": "Baixada Acontece", "instagram_handle": "baixadaacontece", "investimento": 1232.59, "seguidores_relatorio": 17700, "segmentacao": "Baixada Fluminense" },
+    { "nome": "Tá Rolando nos Lagos", "instagram_handle": "tarolandolagos", "investimento": 980.76, "seguidores_relatorio": 3444, "segmentacao": "Região dos Lagos", "instagram_handle_alt": "tarolandonoslagos" }
+  ]
+}

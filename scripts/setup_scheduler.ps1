@@ -18,7 +18,7 @@ if ($Existing) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
 }
 
-Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Atualiza seguidores e curtidas das paginas Visu Cliente"
+Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Busca seguidores Instagram e recalcula investimentos automaticamente"
 
 Write-Host "Tarefa $TaskName criada - execucao diaria as 08:00"
 Write-Host "Para rodar agora: python scripts\update_metrics.py"

@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .venv/
 data/metrics.json
+data/relatorio_financeiro.json

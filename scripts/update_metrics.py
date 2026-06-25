@@ -14,7 +14,10 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from relatorio_financeiro import update_and_save as update_relatorio
+
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 CONFIG_PATH = ROOT / "config" / "pages.json"
 METRICS_PATH = ROOT / "data" / "metrics.json"
 INDEX_PATH = ROOT / "index.html"
@@ -211,6 +214,55 @@ def collect_metrics(page: dict, api_key: str | None, model: str) -> dict:
         },
         "source": source,
     }
+
+
+def fetch_ig_followers_for_relatorio(
+    handle: str,
+    name: str,
+    api_key: str | None,
+    model: str,
+    alt_handle: str | None = None,
+) -> dict:
+    """Busca seguidores Instagram para o relatório financeiro."""
+    ig_url = f"https://www.instagram.com/{handle}/"
+    ig_desc = fetch_og_description(ig_url)
+    ig = parse_instagram(ig_desc) if ig_desc else {}
+    seguidores = ig.get("seguidores")
+    source = "http"
+
+    if seguidores is None and alt_handle:
+        alt_url = f"https://www.instagram.com/{alt_handle}/"
+        alt_desc = fetch_og_description(alt_url)
+        if alt_desc:
+            alt_ig = parse_instagram(alt_desc)
+            seguidores = alt_ig.get("seguidores")
+            if seguidores is not None:
+                source = "http-alt"
+
+    if seguidores is None and api_key:
+        try:
+            ai = openrouter_extract(api_key, model, name, None, ig_url)
+            seguidores = ai.get("seguidores")
+            source = "openrouter"
+        except Exception as exc:
+            print(f"  [aviso] OpenRouter relatório ({name}): {exc}", file=sys.stderr)
+
+    return {"seguidores": seguidores, "source": source}
+
+
+def make_relatorio_fetcher(api_key: str | None, model: str, config_pages: list) -> callable:
+    alt_map = {
+        p.get("instagram_handle", ""): p.get("instagram_handle_alt")
+        for p in config_pages
+        if p.get("instagram_handle_alt")
+    }
+
+    def fetcher(handle: str, name: str) -> dict:
+        return fetch_ig_followers_for_relatorio(
+            handle, name, api_key, model, alt_map.get(handle)
+        )
+
+    return fetcher
 
 
 def render_card(page: dict, metrics: dict, index: int, total: int) -> str:
@@ -852,7 +904,7 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
       Métricas de <strong>Facebook</strong> e <strong>Instagram</strong> reunidas em um só lugar.
       Atualização automática <strong>1x por dia</strong>.
     </p>
-    <div class="update-pill">Última atualização: {updated_at}</div>
+    <div class="update-pill">Atualização automática 1x por dia · {updated_at}</div>
   </header>
 
   <div class="story-bar-wrap">
@@ -980,6 +1032,17 @@ def regenerate_html_only() -> int:
         encoding="utf-8",
     )
     print(f"Página regenerada: {INDEX_PATH}")
+
+    from relatorio_financeiro import RELATORIO_DATA, render_relatorio_html
+    if RELATORIO_DATA.exists():
+        rel = json.loads(RELATORIO_DATA.read_text(encoding="utf-8"))
+        rel_body = {k: v for k, v in rel.items() if k not in ("updated_at", "updated_at_fmt", "model")}
+        from relatorio_financeiro import RELATORIO_HTML
+        RELATORIO_HTML.write_text(
+            render_relatorio_html(rel_body, rel["updated_at_fmt"], rel.get("model", "")),
+            encoding="utf-8",
+        )
+        print(f"Relatório regenerado: {RELATORIO_HTML}")
     return 0
 
 
@@ -1015,8 +1078,18 @@ def main() -> int:
     METRICS_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     INDEX_PATH.write_text(render_index(pages, all_metrics, updated_at, model), encoding="utf-8")
 
+    print("\n--- Relatório financeiro ---")
+    relatorio_config = json.loads((ROOT / "config" / "relatorio_financeiro.json").read_text(encoding="utf-8"))
+    fetcher = make_relatorio_fetcher(api_key, model, relatorio_config["paginas"])
+    for p in relatorio_config["paginas"]:
+        print(f"• {p['nome']} (@{p['instagram_handle']})")
+    rel_payload = update_relatorio(fetcher, model, updated_at)
+    print(f"Investimento total: {rel_payload['resumo']['investimento_fmt']}")
+    print(f"Seguidores totais: {rel_payload['resumo']['seguidores_fmt']}")
+
     print(f"\nConcluído! Métricas salvas em {METRICS_PATH}")
     print(f"Página atualizada: {INDEX_PATH}")
+    print(f"Relatório atualizado: relatoriofinaceiro/index.html")
     return 0
 
 
