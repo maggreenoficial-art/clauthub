@@ -1,0 +1,7 @@
+scripts/
+config/
+data/
+atualizar.bat
+.env
+.env.example
+.gitignore
