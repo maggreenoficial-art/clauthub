@@ -52,8 +52,7 @@
     "id": 7,
     "name": "Radar Campos",
     "instagram_handle": "radarcampos",
-    "note": "Rodando com criativo \"Acorda Zona Norte\"",
-    "facebook_post": null,
+    "facebook_post": "https://fb.me/adspreview/facebook/2jviud296f3vd50",
     "instagram_post": "https://www.instagram.com/p/DYFzU7eAN2r/#advertiser"
   },
   {
@@ -69,7 +68,47 @@
     "name": "Giro Baixada RJ",
     "subtitle": "@girobaixadarj",
     "instagram_handle": "girobaixadarj",
-    "facebook_post": null,
+    "facebook_post": "https://fb.me/adspreview/facebook/2wKZwdMGX0gZh0c",
     "instagram_post": "https://www.instagram.com/p/DYFuIMugJyl/#advertiser"
+  },
+  {
+    "id": 10,
+    "name": "Radar Nova Iguaçu",
+    "instagram_handle": "radarnovaiguacu",
+    "facebook_id": "61578461858053",
+    "facebook_post": "https://www.facebook.com/61578461858053/posts/122110528202948728/",
+    "instagram_post": "https://www.instagram.com/radarnovaiguacu/"
+  },
+  {
+    "id": 11,
+    "name": "Ramal da Baixada",
+    "instagram_handle": "ramaldabaixada",
+    "facebook_id": "61578421560233",
+    "facebook_post": "https://www.facebook.com/61578421560233/posts/122110982756947385/",
+    "instagram_post": "https://www.instagram.com/ramaldabaixada/"
+  },
+  {
+    "id": 12,
+    "name": "Acorda Zona Norte",
+    "instagram_handle": "acordanorterj",
+    "facebook_id": "61578524464189",
+    "facebook_post": "https://www.facebook.com/61578524464189/posts/122114159810950815/",
+    "instagram_post": "https://www.instagram.com/acordanorterj/"
+  },
+  {
+    "id": 13,
+    "name": "Costa Verde em Pauta",
+    "instagram_handle": "costaverdeempauta",
+    "facebook_id": "61576533685128",
+    "facebook_post": "https://www.facebook.com/61576533685128/posts/122110577354884456/",
+    "instagram_post": "https://www.instagram.com/costaverdeempauta/"
+  },
+  {
+    "id": 14,
+    "name": "Caxias em Foco",
+    "instagram_handle": "caxiasemfocorj",
+    "facebook_id": "61577519755417",
+    "facebook_post": "https://www.facebook.com/61577519755417/posts/122110820606917325/",
+    "instagram_post": "https://www.instagram.com/caxiasemfocorj/"
   }
 ]
