@@ -337,6 +337,19 @@ def render_card(page: dict, metrics: dict, index: int, total: int) -> str:
         </article>"""
 
 
+def sort_pages_for_index(pages: list, all_metrics: list) -> tuple[list, list]:
+    """Ordena o carrossel da página inicial por seguidores no Instagram (maior → menor)."""
+    paired = sorted(
+        zip(pages, all_metrics),
+        key=lambda pm: pm[1].get("instagram", {}).get("seguidores") or 0,
+        reverse=True,
+    )
+    if not paired:
+        return pages, all_metrics
+    sorted_pages, sorted_metrics = zip(*paired)
+    return list(sorted_pages), list(sorted_metrics)
+
+
 def render_story_item(page: dict, index: int) -> str:
     handle = page.get("instagram_handle", "")
     initials = "".join(w[0] for w in page["name"].split()[:2]).upper()
@@ -1027,6 +1040,7 @@ def regenerate_html_only() -> int:
         m = entry["metrics"]
         pages.append({k: v for k, v in entry.items() if k != "metrics"})
         all_metrics.append(m)
+    pages, all_metrics = sort_pages_for_index(pages, all_metrics)
     INDEX_PATH.write_text(
         render_index(pages, all_metrics, payload["updated_at_fmt"], payload.get("model", "")),
         encoding="utf-8",
@@ -1076,7 +1090,8 @@ def main() -> int:
 
     METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
     METRICS_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    INDEX_PATH.write_text(render_index(pages, all_metrics, updated_at, model), encoding="utf-8")
+    index_pages, index_metrics = sort_pages_for_index(pages, all_metrics)
+    INDEX_PATH.write_text(render_index(index_pages, index_metrics, updated_at, model), encoding="utf-8")
 
     print("\n--- Relatório financeiro ---")
     relatorio_config = json.loads((ROOT / "config" / "relatorio_financeiro.json").read_text(encoding="utf-8"))
