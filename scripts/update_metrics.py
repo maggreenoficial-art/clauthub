@@ -14,6 +14,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from engajamento import update_and_save as update_engajamento
 from relatorio_financeiro import COLLECTION_TZ, collection_label, update_and_save as update_relatorio
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -506,6 +507,40 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
       50% {{ opacity: 0.4; }}
     }}
 
+    .header-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.65rem;
+    }}
+
+    .btn-engajamento {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      background: var(--ig-gradient);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }}
+
+    .btn-engajamento:hover {{
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }}
+
+    .btn-engajamento svg {{
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }}
+
     /* ── Story bar ── */
     .story-bar-wrap {{
       padding: 1rem 0 0.5rem;
@@ -917,7 +952,13 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
       Métricas de <strong>Facebook</strong> e <strong>Instagram</strong> reunidas em um só lugar.
       Atualização automática <strong>1x por dia</strong>.
     </p>
-    <div class="update-pill">{updated_at}</div>
+    <div class="header-actions">
+      <div class="update-pill">{updated_at}</div>
+      <a href="/engajamento" class="btn-engajamento" aria-label="Ver engajamento das páginas">
+        <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+        Engajamento das Páginas
+      </a>
+    </div>
   </header>
 
   <div class="story-bar-wrap">
@@ -1063,6 +1104,16 @@ def regenerate_html_only() -> int:
             encoding="utf-8",
         )
         print(f"Relatório regenerado: {RELATORIO_HTML}")
+
+    from engajamento import ENGAJAMENTO_DATA, ENGAJAMENTO_HTML, render_engajamento_html
+    if ENGAJAMENTO_DATA.exists():
+        eng = json.loads(ENGAJAMENTO_DATA.read_text(encoding="utf-8"))
+        eng_body = {k: v for k, v in eng.items() if k not in ("updated_at", "updated_at_fmt", "model")}
+        eng_updated = eng.get("updated_at_fmt", updated_at)
+        if eng.get("updated_at"):
+            eng_updated = collection_label(datetime.fromisoformat(eng["updated_at"]))
+        ENGAJAMENTO_HTML.write_text(render_engajamento_html(eng_body, eng_updated), encoding="utf-8")
+        print(f"Engajamento regenerado: {ENGAJAMENTO_HTML}")
     return 0
 
 
@@ -1108,9 +1159,16 @@ def main() -> int:
     print(f"Investimento total: {rel_payload['resumo']['investimento_fmt']}")
     print(f"Seguidores totais: {rel_payload['resumo']['seguidores_fmt']}")
 
+    print("\n--- Engajamento das páginas ---")
+    for p in pages:
+        print(f"• {p['name']}")
+    eng_payload = update_engajamento(pages, all_metrics, api_key, model, updated_at)
+    print(f"Engajamento total: {eng_payload['resumo']['engajamento_fmt']}")
+
     print(f"\nConcluído! Métricas salvas em {METRICS_PATH}")
     print(f"Página atualizada: {INDEX_PATH}")
     print(f"Relatório atualizado: relatoriofinaceiro/index.html")
+    print(f"Engajamento atualizado: engajamento/index.html")
     return 0
 
 

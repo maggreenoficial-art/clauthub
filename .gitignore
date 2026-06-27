@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 data/metrics.json
 data/relatorio_financeiro.json
+data/engajamento.json
