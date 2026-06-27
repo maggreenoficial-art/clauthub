@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import html
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+COLLECTION_TZ = timezone(timedelta(hours=-3))  # Horário de Brasília (sem horário de verão)
+
+
+def collection_label(when: datetime | None = None) -> str:
+    """Rótulo fixo de coleta diária às 08:00 (horário de Brasília)."""
+    now = (when or datetime.now(COLLECTION_TZ)).astimezone(COLLECTION_TZ)
+    return f"Dados coletados diariamente às 08:00 · Última coleta: {now.strftime('%d/%m/%Y')} às 08:00"
 RELATORIO_CONFIG = ROOT / "config" / "relatorio_financeiro.json"
 RELATORIO_DATA = ROOT / "data" / "relatorio_financeiro.json"
 RELATORIO_HTML = ROOT / "relatoriofinaceiro" / "index.html"
@@ -228,7 +235,7 @@ def render_relatorio_html(data: dict, updated_at: str, model: str) -> str:
     <h1 class="header-title">Relatório Financeiro — Páginas e Campanhas</h1>
     <p class="header-meta"><strong>Atualização Automática</strong><br>Investimento Meta Ads · seguidores atualizados via Instagram</p>
     <div class="header-actions">
-      <div class="update-pill">Atualização automática 1x por dia · {html.escape(updated_at)}</div>
+      <div class="update-pill">{html.escape(updated_at)}</div>
       <button type="button" class="btn-print no-print" onclick="window.print()" aria-label="Imprimir relatório em PDF">
         <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
         Salvar PDF

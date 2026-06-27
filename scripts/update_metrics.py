@@ -14,7 +14,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from relatorio_financeiro import update_and_save as update_relatorio
+from relatorio_financeiro import COLLECTION_TZ, collection_label, update_and_save as update_relatorio
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -917,7 +917,7 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
       Métricas de <strong>Facebook</strong> e <strong>Instagram</strong> reunidas em um só lugar.
       Atualização automática <strong>1x por dia</strong>.
     </p>
-    <div class="update-pill">Atualização automática 1x por dia · {updated_at}</div>
+    <div class="update-pill">{updated_at}</div>
   </header>
 
   <div class="story-bar-wrap">
@@ -1041,8 +1041,11 @@ def regenerate_html_only() -> int:
         pages.append({k: v for k, v in entry.items() if k != "metrics"})
         all_metrics.append(m)
     pages, all_metrics = sort_pages_for_index(pages, all_metrics)
+    updated_at = payload.get("updated_at_fmt")
+    if payload.get("updated_at"):
+        updated_at = collection_label(datetime.fromisoformat(payload["updated_at"]))
     INDEX_PATH.write_text(
-        render_index(pages, all_metrics, payload["updated_at_fmt"], payload.get("model", "")),
+        render_index(pages, all_metrics, updated_at, payload.get("model", "")),
         encoding="utf-8",
     )
     print(f"Página regenerada: {INDEX_PATH}")
@@ -1052,8 +1055,11 @@ def regenerate_html_only() -> int:
         rel = json.loads(RELATORIO_DATA.read_text(encoding="utf-8"))
         rel_body = {k: v for k, v in rel.items() if k not in ("updated_at", "updated_at_fmt", "model")}
         from relatorio_financeiro import RELATORIO_HTML
+        rel_updated = rel.get("updated_at_fmt", "")
+        if rel.get("updated_at"):
+            rel_updated = collection_label(datetime.fromisoformat(rel["updated_at"]))
         RELATORIO_HTML.write_text(
-            render_relatorio_html(rel_body, rel["updated_at_fmt"], rel.get("model", "")),
+            render_relatorio_html(rel_body, rel_updated, rel.get("model", "")),
             encoding="utf-8",
         )
         print(f"Relatório regenerado: {RELATORIO_HTML}")
@@ -1078,8 +1084,8 @@ def main() -> int:
         print(f"• {page['name']}")
         all_metrics.append(collect_metrics(page, api_key, model))
 
-    now = datetime.now(timezone.utc).astimezone()
-    updated_at = now.strftime("%d/%m/%Y às %H:%M")
+    now = datetime.now(COLLECTION_TZ)
+    updated_at = collection_label(now)
 
     payload = {
         "updated_at": now.isoformat(),

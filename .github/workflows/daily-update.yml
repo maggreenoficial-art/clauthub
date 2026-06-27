@@ -2,6 +2,7 @@ name: Atualizacao Diaria
 
 on:
   schedule:
+    # 08:00 horário de Brasília (UTC-3) = 11:00 UTC
     - cron: "0 11 * * *"
   workflow_dispatch:
 
@@ -18,10 +19,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Verificar OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "::error::Configure OPENROUTER_API_KEY em Settings > Secrets and variables > Actions do repositório GitHub."
+            exit 1
+          fi
+
       - name: Instalar dependencias
         run: pip install -r scripts/requirements.txt
 
-      - name: Buscar seguidores e recalcular investimentos
+      - name: Buscar seguidores e recalcular investimentos (08:00 BRT)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: google/gemini-2.5-flash
@@ -30,5 +40,5 @@ jobs:
       - name: Publicar paginas atualizadas
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: atualizacao automatica diaria de metricas"
-          file_pattern: "index.html relatoriofinaceiro/index.html"
+          commit_message: "chore: atualizacao automatica diaria de metricas (08:00 BRT)"
+          file_pattern: "index.html relatoriofinaceiro/index.html data/metrics.json data/relatorio_financeiro.json"
