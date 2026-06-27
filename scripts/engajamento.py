@@ -8,12 +8,15 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+import requests
+
 from relatorio_financeiro import collection_label
-from instagram_scraper import InstagramScraper, REQUEST_DELAY, DEFAULT_MAX_POSTS
+from instagram_scraper import BROWSER_UA, InstagramScraper, REQUEST_DELAY, DEFAULT_MAX_POSTS
 
 ROOT = Path(__file__).resolve().parent.parent
 ENGAJAMENTO_DATA = ROOT / "data" / "engajamento.json"
 ENGAJAMENTO_HTML = ROOT / "engajamento" / "index.html"
+THUMBS_DIR = ROOT / "engajamento" / "thumbs"
 MAX_POSTS_LABEL = DEFAULT_MAX_POSTS
 
 
@@ -61,6 +64,49 @@ def _backfill_missing_thumbnails(top_posts: list, max_fetch: int = 12) -> None:
         gql = scraper.fetch_post_graphql(post["shortcode"], referer=post["url"])
         if gql and gql.get("thumbnail"):
             post["thumbnail"] = gql["thumbnail"]
+
+
+def _local_thumb_path(shortcode: str) -> str:
+    return f"/engajamento/thumbs/{shortcode}.jpg"
+
+
+def _cache_thumbnail(remote_url: str, shortcode: str) -> str:
+    """Baixa miniatura do CDN do Instagram para servir localmente (URLs expiram)."""
+    if not remote_url or not shortcode:
+        return ""
+    THUMBS_DIR.mkdir(parents=True, exist_ok=True)
+    dest = THUMBS_DIR / f"{shortcode}.jpg"
+    try:
+        r = requests.get(
+            remote_url,
+            headers={"User-Agent": BROWSER_UA, "Referer": "https://www.instagram.com/"},
+            timeout=30,
+        )
+        r.raise_for_status()
+        dest.write_bytes(r.content)
+        return _local_thumb_path(shortcode)
+    except requests.RequestException as exc:
+        print(f"  [aviso] Miniatura {shortcode}: {exc}", file=sys.stderr)
+        if dest.exists():
+            return _local_thumb_path(shortcode)
+        return ""
+
+
+def _cache_post_thumbnails(posts: list) -> None:
+    for post in posts:
+        shortcode = post.get("shortcode")
+        if not shortcode:
+            continue
+        local = _local_thumb_path(shortcode)
+        local_file = THUMBS_DIR / f"{shortcode}.jpg"
+        if local_file.exists() and local_file.stat().st_size > 0:
+            post["thumbnail_local"] = local
+            continue
+        remote = post.get("thumbnail") or ""
+        if remote.startswith("http"):
+            cached = _cache_thumbnail(remote, shortcode)
+            if cached:
+                post["thumbnail_local"] = cached
 
 
 def _mark_hot_pages(rows: list) -> None:
@@ -195,6 +241,8 @@ def compute_engajamento(
     top5 = [r for r in rows if r["engajamento_total"] > 0][:5]
     max_eng = top5[0]["engajamento_total"] if top5 else 1
     top_posts = _build_top_posts(rows, limit=12)
+    _backfill_missing_thumbnails(top_posts)
+    _cache_post_thumbnails(top_posts)
 
     return {
         "titulo": "Engajamento Instagram",
@@ -223,12 +271,14 @@ def compute_engajamento(
 
 def _render_post_card(post: dict, rank: int | None = None) -> str:
     link = html.escape(post["url"])
-    thumb = post.get("thumbnail") or ""
+    thumb_src = post.get("thumbnail_local") or post.get("thumbnail") or ""
     rank_badge = f'<span class="post-rank">#{rank}</span>' if rank else ""
-    if thumb:
+    if thumb_src:
         thumb_html = (
             f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link">'
-            f'<img class="post-thumb" src="{html.escape(thumb)}" alt="Publicação {html.escape(post["pagina"])}" loading="lazy">'
+            f'<img class="post-thumb" src="{html.escape(thumb_src)}" '
+            f'referrerpolicy="no-referrer" '
+            f'alt="Publicação {html.escape(post["pagina"])}" loading="lazy">'
             f"</a>"
         )
     else:
@@ -258,6 +308,7 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
 
     top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=12)
     _backfill_missing_thumbnails(top_posts)
+    _cache_post_thumbnails(top_posts)
 
     max_posts = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
     hot_count = sum(1 for p in data["paginas"] if p.get("hot"))
