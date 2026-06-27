@@ -9,11 +9,55 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from relatorio_financeiro import collection_label
-from instagram_scraper import InstagramScraper, REQUEST_DELAY
+from instagram_scraper import InstagramScraper, REQUEST_DELAY, DEFAULT_MAX_POSTS
 
 ROOT = Path(__file__).resolve().parent.parent
 ENGAJAMENTO_DATA = ROOT / "data" / "engajamento.json"
 ENGAJAMENTO_HTML = ROOT / "engajamento" / "index.html"
+MAX_POSTS_LABEL = DEFAULT_MAX_POSTS
+
+
+def _post_engagement(post: dict) -> int:
+    return post["visualizacoes"] + post["curtidas"] + post["comentarios"]
+
+
+def _mark_hot_pages(rows: list) -> None:
+    """Marca páginas em tração: top 3, momentum recente ou acima da média."""
+    active = [r for r in rows if r["publicacoes_coletadas"] > 0 and r["engajamento_total"] > 0]
+    if not active:
+        for r in rows:
+            r["hot"] = False
+            r["momentum_fmt"] = ""
+        return
+
+    avg_per_post = sum(r["engajamento_total"] / r["publicacoes_coletadas"] for r in active) / len(active)
+    top3_names = {r["nome"] for r in rows[:3]}
+
+    for r in rows:
+        if r["publicacoes_coletadas"] == 0:
+            r["hot"] = False
+            r["momentum_fmt"] = ""
+            continue
+
+        posts = r.get("posts") or []
+        momentum = 0.0
+        if len(posts) >= 6:
+            recent = posts[:3]
+            older = posts[-3:]
+            recent_avg = sum(_post_engagement(p) for p in recent) / len(recent)
+            older_avg = sum(_post_engagement(p) for p in older) / len(older)
+            if older_avg > 0:
+                momentum = recent_avg / older_avg
+            elif recent_avg > 0:
+                momentum = 2.0
+
+        per_post = r["engajamento_total"] / r["publicacoes_coletadas"]
+        r["hot"] = (
+            r["nome"] in top3_names
+            or momentum >= 1.35
+            or per_post >= avg_per_post * 1.4
+        )
+        r["momentum_fmt"] = f"{momentum:.1f}x" if momentum >= 1.1 else ""
 
 
 def _fmt_num(value: int) -> str:
@@ -48,13 +92,11 @@ def collect_page_engagement(
         "visualizacoes": profile.visualizacoes,
         "curtidas": profile.curtidas,
         "comentarios": profile.comentarios,
-        "compartilhamentos": profile.compartilhamentos,
         "visualizacoes_fmt": _fmt_num(profile.visualizacoes),
         "curtidas_fmt": _fmt_num(profile.curtidas),
         "comentarios_fmt": _fmt_num(profile.comentarios),
-        "compartilhamentos_fmt": _fmt_num(profile.compartilhamentos),
-        "engajamento_total": profile.total,
-        "engajamento_fmt": _fmt_num(profile.total),
+        "engajamento_total": profile.visualizacoes + profile.curtidas + profile.comentarios,
+        "engajamento_fmt": _fmt_num(profile.visualizacoes + profile.curtidas + profile.comentarios),
         "source": profile.source,
         "posts": [
             {
@@ -63,7 +105,6 @@ def collect_page_engagement(
                 "visualizacoes": p.visualizacoes,
                 "curtidas": p.curtidas,
                 "comentarios": p.comentarios,
-                "compartilhamentos": p.compartilhamentos,
                 "source": p.source,
             }
             for p in profile.publicacoes
@@ -80,20 +121,22 @@ def compute_engajamento(
     scraper = InstagramScraper(delay=REQUEST_DELAY)
     rows = [collect_page_engagement(p, scraper, api_key, model) for p in pages]
     rows.sort(key=lambda x: x["engajamento_total"], reverse=True)
+    _mark_hot_pages(rows)
 
     sum_views = sum(r["visualizacoes"] for r in rows)
     sum_likes = sum(r["curtidas"] for r in rows)
     sum_comments = sum(r["comentarios"] for r in rows)
-    sum_shares = sum(r["compartilhamentos"] for r in rows)
     sum_posts = sum(r["publicacoes_coletadas"] for r in rows)
-    total = sum_views + sum_likes + sum_comments + sum_shares
+    total = sum_views + sum_likes + sum_comments
     media = total // len(rows) if rows else 0
+    hot_count = sum(1 for r in rows if r.get("hot"))
 
     top5 = [r for r in rows if r["engajamento_total"] > 0][:5]
     max_eng = top5[0]["engajamento_total"] if top5 else 1
 
     return {
         "titulo": "Engajamento Instagram",
+        "max_posts_por_pagina": MAX_POSTS_LABEL,
         "resumo": {
             "visualizacoes_total": sum_views,
             "visualizacoes_fmt": _fmt_num(sum_views),
@@ -101,12 +144,11 @@ def compute_engajamento(
             "curtidas_fmt": _fmt_num(sum_likes),
             "comentarios_total": sum_comments,
             "comentarios_fmt": _fmt_num(sum_comments),
-            "compartilhamentos_total": sum_shares,
-            "compartilhamentos_fmt": _fmt_num(sum_shares),
             "publicacoes_coletadas": sum_posts,
             "engajamento_total": total,
             "engajamento_fmt": _fmt_num(total),
             "paginas": len(rows),
+            "paginas_hot": hot_count,
             "media_por_pagina": media,
             "media_fmt": _fmt_num(media),
         },
@@ -117,18 +159,30 @@ def compute_engajamento(
 
 
 def render_engajamento_html(data: dict, updated_at: str) -> str:
+    if data["paginas"] and "hot" not in data["paginas"][0]:
+        _mark_hot_pages(data["paginas"])
+
+    max_posts = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
+    hot_count = sum(1 for p in data["paginas"] if p.get("hot"))
+
     rows_html = ""
     for i, p in enumerate(data["paginas"], 1):
         pct = min(100, int(p["engajamento_total"] / data["max_engajamento"] * 100)) if p["engajamento_total"] else 0
-        pub_note = f'{p["publicacoes_coletadas"]} pub.' if p["publicacoes_coletadas"] else "—"
+        pub_note = f'{p["publicacoes_coletadas"]}/{max_posts} pub.' if p["publicacoes_coletadas"] else "—"
+        hot_cls = "row-hot" if p.get("hot") else ""
+        if p.get("hot"):
+            momentum_suffix = f' · {p["momentum_fmt"]}' if p.get("momentum_fmt") else ""
+            hot_badge = f'<span class="hot-badge" title="Em tração">🔥 HOT{momentum_suffix}</span>'
+        else:
+            hot_badge = ""
+        tr_class = f' class="{hot_cls}"' if hot_cls else ""
         rows_html += f"""
-        <tr>
+        <tr{tr_class}>
           <td>{i}</td>
-          <td><strong>{html.escape(p["nome"])}</strong><span class="td-handle">{html.escape(p["handle"])} · {pub_note}</span></td>
+          <td><strong>{html.escape(p["nome"])}</strong>{hot_badge}<span class="td-handle">{html.escape(p["handle"])} · {pub_note}</span></td>
           <td>{p["visualizacoes_fmt"]}</td>
           <td>{p["curtidas_fmt"]}</td>
           <td>{p["comentarios_fmt"]}</td>
-          <td>{p["compartilhamentos_fmt"]}</td>
           <td><strong>{p["engajamento_fmt"]}</strong></td>
           <td><div class="bar-wrap"><div class="bar" style="width:{pct}%"></div></div></td>
         </tr>"""
@@ -136,10 +190,12 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     top_html = ""
     for p in data["top5"]:
         pct = min(100, int(p["engajamento_total"] / data["max_engajamento"] * 100))
+        hot_cls = " top-item-hot" if p.get("hot") else ""
+        hot_label = '<span class="hot-badge hot-badge-sm">🔥 Em tração</span>' if p.get("hot") else ""
         top_html += f"""
-        <div class="top-item">
-          <div class="chart-label"><span>{html.escape(p["nome"])}</span><span>{p["engajamento_fmt"]}</span></div>
-          <div class="chart-sub">{p["publicacoes_coletadas"]} publicações · {p["visualizacoes_fmt"]} views · {p["curtidas_fmt"]} curtidas · {p["comentarios_fmt"]} coment.</div>
+        <div class="top-item{hot_cls}">
+          <div class="chart-label"><span>{html.escape(p["nome"])} {hot_label}</span><span>{p["engajamento_fmt"]}</span></div>
+          <div class="chart-sub">últimas {p["publicacoes_coletadas"]} publicações · {p["visualizacoes_fmt"]} views · {p["curtidas_fmt"]} curtidas · {p["comentarios_fmt"]} coment.</div>
           <div class="chart-bar-bg"><div class="chart-bar" style="width:{pct}%"></div></div>
         </div>"""
 
@@ -181,12 +237,26 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     }}
     .update-pill::before {{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }}
     @keyframes pulse {{ 0%,100%{{opacity:1}} 50%{{opacity:0.4}} }}
+    @keyframes hot-glow {{
+      0%,100% {{ box-shadow: 0 0 0 0 rgba(255,100,50,0.35); }}
+      50% {{ box-shadow: 0 0 14px 3px rgba(255,100,50,0.55); }}
+    }}
+    @keyframes hot-shimmer {{
+      0% {{ background-position: 200% center; }}
+      100% {{ background-position: -200% center; }}
+    }}
+    .info-banner {{
+      margin-top: 0.85rem; padding: 0.75rem 0.9rem; border-radius: 14px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.76rem; line-height: 1.55; color: rgba(255,255,255,0.65);
+    }}
+    .info-banner strong {{ color: rgba(255,255,255,0.9); }}
     .back-link {{ display: inline-flex; margin-top: 0.65rem; font-size: 0.78rem; color: rgba(255,255,255,0.55); }}
     main {{ max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }}
     .section-title {{ font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); margin: 1.5rem 0 0.75rem; }}
     .kpi-grid {{ display: grid; grid-template-columns: repeat(2,1fr); gap: 0.65rem; }}
     @media(min-width:640px){{ .kpi-grid{{ grid-template-columns:repeat(3,1fr); }} }}
-    @media(min-width:900px){{ .kpi-grid{{ grid-template-columns:repeat(6,1fr); }} }}
+    @media(min-width:900px){{ .kpi-grid{{ grid-template-columns:repeat(5,1fr); }} }}
     .kpi-card {{ background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1rem; }}
     .kpi-card.highlight {{ background: linear-gradient(135deg,rgba(240,148,51,0.15),rgba(188,24,136,0.15)); border-color: rgba(188,24,136,0.3); grid-column: span 2; }}
     @media(min-width:900px){{ .kpi-card.highlight{{ grid-column: span 1; }} }}
@@ -200,7 +270,26 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     .chart-sub {{ font-size: 0.68rem; color: var(--muted); margin-bottom: 0.35rem; }}
     .chart-bar-bg {{ height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; margin-bottom: 0.65rem; }}
     .chart-bar {{ height: 100%; background: var(--ig-gradient); border-radius: 4px; }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 720px; }}
+    .top-item-hot {{
+      padding: 0.55rem 0.65rem; margin: 0 -0.65rem 0.5rem; border-radius: 12px;
+      background: linear-gradient(90deg, rgba(255,90,40,0.08), rgba(255,40,120,0.06), rgba(255,90,40,0.08));
+      background-size: 200% auto;
+      animation: hot-shimmer 4s linear infinite;
+      border: 1px solid rgba(255,120,60,0.25);
+    }}
+    .hot-badge {{
+      display: inline-flex; align-items: center; gap: 0.2rem;
+      margin-left: 0.35rem; padding: 0.12rem 0.45rem; border-radius: 20px;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+      color: #ff6b35; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.35);
+      animation: hot-glow 2s ease-in-out infinite; vertical-align: middle;
+    }}
+    .hot-badge-sm {{ font-size: 0.55rem; padding: 0.1rem 0.4rem; }}
+    tr.row-hot td {{
+      background: linear-gradient(90deg, rgba(255,107,53,0.06), transparent);
+    }}
+    tr.row-hot td:first-child {{ border-left: 3px solid #ff6b35; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 640px; }}
     th {{ text-align: left; padding: 0.6rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }}
     td {{ padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }}
     .td-handle {{ color: var(--muted); font-size: 0.72rem; display: block; }}
@@ -219,8 +308,12 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       <span class="doc-badge">Scraper IG</span>
     </div>
     <h1 class="header-title">Engajamento Instagram</h1>
-    <p class="header-meta"><strong>Raspagem automática de publicações</strong><br>
-    {r["publicacoes_coletadas"]} publicações analisadas · views, curtidas, comentários e compartilhamentos · 1x/dia às 08:00</p>
+    <p class="header-meta">Métricas consolidadas das publicações recentes de cada perfil.</p>
+    <div class="info-banner">
+      <strong>Como funciona:</strong> o sistema analisa automaticamente as <strong>últimas {max_posts} publicações</strong> de cada página no Instagram
+      e soma visualizações, curtidas e comentários para medir o engajamento real.
+      Atualização diária às 08:00 · {r["publicacoes_coletadas"]} publicações analisadas nesta coleta.
+    </div>
     <div class="update-pill">{html.escape(updated_at)}</div>
     <a class="back-link" href="/">← Voltar ao acompanhamento</a>
   </header>
@@ -232,19 +325,18 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       <div class="kpi-card"><div class="kpi-label">Visualizações</div><div class="kpi-value">{r["visualizacoes_fmt"]}</div></div>
       <div class="kpi-card"><div class="kpi-label">Curtidas</div><div class="kpi-value">{r["curtidas_fmt"]}</div></div>
       <div class="kpi-card"><div class="kpi-label">Comentários</div><div class="kpi-value">{r["comentarios_fmt"]}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Compartilhamentos</div><div class="kpi-value">{r["compartilhamentos_fmt"]}</div></div>
     </div>
-    <p class="section-title">Top 5 páginas</p>
-    <div class="panel"><h3>Maior engajamento raspado</h3>{top_html}</div>
+    <p class="section-title">Top 5 páginas{f' · {hot_count} em tração 🔥' if hot_count else ''}</p>
+    <div class="panel"><h3>Maior engajamento nas últimas {max_posts} publicações</h3>{top_html}</div>
     <p class="section-title">Todas as páginas ({r["paginas"]})</p>
     <div class="panel">
       <table>
-        <thead><tr><th>#</th><th>Página</th><th>Views</th><th>Curtidas</th><th>Coment.</th><th>Shares</th><th>Total</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Página</th><th>Views</th><th>Curtidas</th><th>Coment.</th><th>Total</th><th></th></tr></thead>
         <tbody>{rows_html}</tbody>
       </table>
     </div>
   </main>
-  <footer class="app-footer">Clauth Hub · Scraper de publicações Instagram · API + embed + IA</footer>
+  <footer class="app-footer">Clauth Hub · Últimas {max_posts} publicações por perfil · views, curtidas e comentários</footer>
 </body>
 </html>"""
 
