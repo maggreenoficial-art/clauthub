@@ -21,6 +21,48 @@ def _post_engagement(post: dict) -> int:
     return post["visualizacoes"] + post["curtidas"] + post["comentarios"]
 
 
+def _serialize_post(post: dict, pagina: str, handle: str) -> dict:
+    eng = _post_engagement(post)
+    return {
+        "url": post["url"],
+        "shortcode": post["shortcode"],
+        "thumbnail": post.get("thumbnail") or "",
+        "visualizacoes": post["visualizacoes"],
+        "curtidas": post["curtidas"],
+        "comentarios": post["comentarios"],
+        "visualizacoes_fmt": _fmt_num(post["visualizacoes"]),
+        "curtidas_fmt": _fmt_num(post["curtidas"]),
+        "comentarios_fmt": _fmt_num(post["comentarios"]),
+        "engajamento_total": eng,
+        "engajamento_fmt": _fmt_num(eng),
+        "pagina": pagina,
+        "handle": handle,
+        "source": post.get("source", ""),
+    }
+
+
+def _build_top_posts(rows: list, limit: int = 12) -> list:
+    posts: list[dict] = []
+    for row in rows:
+        for post in row.get("posts") or []:
+            if _post_engagement(post) <= 0:
+                continue
+            posts.append(_serialize_post(post, row["nome"], row["handle"]))
+    posts.sort(key=lambda x: x["engajamento_total"], reverse=True)
+    return posts[:limit]
+
+
+def _backfill_missing_thumbnails(top_posts: list, max_fetch: int = 12) -> None:
+    missing = [p for p in top_posts if not p.get("thumbnail")][:max_fetch]
+    if not missing:
+        return
+    scraper = InstagramScraper(delay=0.6)
+    for post in missing:
+        gql = scraper.fetch_post_graphql(post["shortcode"], referer=post["url"])
+        if gql and gql.get("thumbnail"):
+            post["thumbnail"] = gql["thumbnail"]
+
+
 def _mark_hot_pages(rows: list) -> None:
     """Marca páginas em tração: top 3, momentum recente ou acima da média."""
     active = [r for r in rows if r["publicacoes_coletadas"] > 0 and r["engajamento_total"] > 0]
@@ -85,7 +127,7 @@ def collect_page_engagement(
         model=model,
     )
 
-    return {
+    row = {
         "nome": page["name"],
         "handle": f"@{handle}",
         "publicacoes_coletadas": len(profile.publicacoes),
@@ -102,14 +144,33 @@ def collect_page_engagement(
             {
                 "url": p.url,
                 "shortcode": p.shortcode,
+                "thumbnail": p.thumbnail,
                 "visualizacoes": p.visualizacoes,
                 "curtidas": p.curtidas,
                 "comentarios": p.comentarios,
+                "engajamento_total": p.visualizacoes + p.curtidas + p.comentarios,
                 "source": p.source,
             }
             for p in profile.publicacoes
         ],
+        "melhor_publicacao": None,
     }
+    if profile.publicacoes:
+        best = max(profile.publicacoes, key=lambda p: p.visualizacoes + p.curtidas + p.comentarios)
+        row["melhor_publicacao"] = _serialize_post(
+            {
+                "url": best.url,
+                "shortcode": best.shortcode,
+                "thumbnail": best.thumbnail,
+                "visualizacoes": best.visualizacoes,
+                "curtidas": best.curtidas,
+                "comentarios": best.comentarios,
+                "source": best.source,
+            },
+            row["nome"],
+            row["handle"],
+        )
+    return row
 
 
 def compute_engajamento(
@@ -133,6 +194,7 @@ def compute_engajamento(
 
     top5 = [r for r in rows if r["engajamento_total"] > 0][:5]
     max_eng = top5[0]["engajamento_total"] if top5 else 1
+    top_posts = _build_top_posts(rows, limit=12)
 
     return {
         "titulo": "Engajamento Instagram",
@@ -154,13 +216,48 @@ def compute_engajamento(
         },
         "paginas": rows,
         "top5": top5,
+        "top_posts": top_posts,
         "max_engajamento": max_eng or 1,
     }
+
+
+def _render_post_card(post: dict, rank: int | None = None) -> str:
+    link = html.escape(post["url"])
+    thumb = post.get("thumbnail") or ""
+    rank_badge = f'<span class="post-rank">#{rank}</span>' if rank else ""
+    if thumb:
+        thumb_html = (
+            f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link">'
+            f'<img class="post-thumb" src="{html.escape(thumb)}" alt="Publicação {html.escape(post["pagina"])}" loading="lazy">'
+            f"</a>"
+        )
+    else:
+        thumb_html = (
+            f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link post-thumb-empty">'
+            f'<span>📷</span></a>'
+        )
+    return f"""
+    <article class="post-card">
+      {rank_badge}
+      {thumb_html}
+      <div class="post-card-body">
+        <div class="post-page">{html.escape(post["pagina"])}</div>
+        <div class="post-handle">{html.escape(post["handle"])}</div>
+        <div class="post-metrics">
+          <span><strong>{post["engajamento_fmt"]}</strong> total</span>
+          <span>{post["visualizacoes_fmt"]} views · {post["curtidas_fmt"]} ❤ · {post["comentarios_fmt"]} 💬</span>
+        </div>
+        <a class="post-link" href="{link}" target="_blank" rel="noopener noreferrer">Ver no Instagram →</a>
+      </div>
+    </article>"""
 
 
 def render_engajamento_html(data: dict, updated_at: str) -> str:
     if data["paginas"] and "hot" not in data["paginas"][0]:
         _mark_hot_pages(data["paginas"])
+
+    top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=12)
+    _backfill_missing_thumbnails(top_posts)
 
     max_posts = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
     hot_count = sum(1 for p in data["paginas"] if p.get("hot"))
@@ -201,6 +298,12 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
 
     if not top_html:
         top_html = '<p class="empty-note">Nenhuma publicação raspada nesta execução. Tente novamente ou verifique os perfis.</p>'
+
+    top_posts_html = ""
+    if top_posts:
+        top_posts_html = "".join(_render_post_card(p, i) for i, p in enumerate(top_posts, 1))
+    else:
+        top_posts_html = '<p class="empty-note">Nenhuma publicação com engajamento registrado.</p>'
 
     r = data["resumo"]
     return f"""<!DOCTYPE html>
@@ -265,6 +368,7 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     .kpi-card.highlight .kpi-value {{ background: var(--ig-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
     .panel {{ background: var(--surface); border-radius: 18px; padding: 1.15rem; color: var(--text); margin-top: 0.65rem; overflow-x: auto; }}
     .panel h3 {{ font-size: 0.95rem; font-weight: 700; margin-bottom: 0.85rem; }}
+    .panel-desc {{ font-size: 0.72rem; color: var(--muted); margin: -0.5rem 0 0.85rem; line-height: 1.45; }}
     .empty-note {{ font-size: 0.78rem; color: var(--muted); }}
     .chart-label {{ display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.15rem; }}
     .chart-sub {{ font-size: 0.68rem; color: var(--muted); margin-bottom: 0.35rem; }}
@@ -289,6 +393,40 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       background: linear-gradient(90deg, rgba(255,107,53,0.06), transparent);
     }}
     tr.row-hot td:first-child {{ border-left: 3px solid #ff6b35; }}
+    .posts-grid {{
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
+    }}
+    @media(min-width:640px){{ .posts-grid{{ grid-template-columns:repeat(3, minmax(0, 1fr)); }} }}
+    @media(min-width:900px){{ .posts-grid{{ grid-template-columns:repeat(4, minmax(0, 1fr)); }} }}
+    .post-card {{
+      position: relative; border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--border); background: #fafafa;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }}
+    .post-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }}
+    .post-rank {{
+      position: absolute; top: 8px; left: 8px; z-index: 2;
+      background: rgba(0,0,0,0.72); color: #fff; font-size: 0.62rem; font-weight: 800;
+      padding: 0.2rem 0.45rem; border-radius: 20px;
+    }}
+    .post-thumb-link {{ display: block; aspect-ratio: 1; background: #efefef; }}
+    .post-thumb {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
+    .post-thumb-empty {{
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; min-height: 120px; font-size: 2rem; color: var(--muted);
+    }}
+    .post-card-body {{ padding: 0.6rem 0.65rem 0.7rem; }}
+    .post-page {{ font-size: 0.72rem; font-weight: 700; line-height: 1.3; }}
+    .post-handle {{ font-size: 0.65rem; color: var(--muted); margin-top: 0.1rem; }}
+    .post-metrics {{
+      display: flex; flex-direction: column; gap: 0.15rem;
+      font-size: 0.64rem; color: var(--muted); margin-top: 0.4rem; line-height: 1.35;
+    }}
+    .post-metrics strong {{ color: var(--text); font-size: 0.78rem; }}
+    .post-link {{
+      display: inline-block; margin-top: 0.45rem; font-size: 0.65rem; font-weight: 600;
+      color: #dc2743 !important;
+    }}
     table {{ width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 640px; }}
     th {{ text-align: left; padding: 0.6rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }}
     td {{ padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }}
@@ -328,6 +466,12 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     </div>
     <p class="section-title">Top 5 páginas{f' · {hot_count} em tração 🔥' if hot_count else ''}</p>
     <div class="panel"><h3>Maior engajamento nas últimas {max_posts} publicações</h3>{top_html}</div>
+    <p class="section-title">O que está funcionando · top publicações</p>
+    <div class="panel">
+      <h3>Publicações com maior engajamento para análise de conteúdo</h3>
+      <p class="panel-desc">Clique na miniatura ou no link para abrir no Instagram e ver o que performou melhor.</p>
+      <div class="posts-grid">{top_posts_html}</div>
+    </div>
     <p class="section-title">Todas as páginas ({r["paginas"]})</p>
     <div class="panel">
       <table>

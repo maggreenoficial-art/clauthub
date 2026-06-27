@@ -32,6 +32,7 @@ class PostMetrics:
     curtidas: int = 0
     comentarios: int = 0
     compartilhamentos: int = 0
+    thumbnail: str = ""
     source: str = "http"
 
     @property
@@ -117,6 +118,22 @@ def _embed_url(shortcode: str) -> str:
     return f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
 
 
+def _thumbnail_from_feed_item(item: dict) -> str:
+    candidates = (item.get("image_versions2") or {}).get("candidates") or []
+    if candidates:
+        return candidates[0].get("url") or ""
+    return item.get("thumbnail_url") or item.get("display_uri") or ""
+
+
+def _thumbnail_from_graphql_media(media: dict) -> str:
+    return media.get("thumbnail_src") or media.get("display_url") or ""
+
+
+def _thumbnail_from_html(html_page: str) -> str:
+    m = re.search(r'og:image" content="([^"]+)"', html_page)
+    return htmlmod.unescape(m.group(1)) if m else ""
+
+
 class InstagramScraper:
     def __init__(self, delay: float = REQUEST_DELAY):
         self.delay = delay
@@ -159,6 +176,7 @@ class InstagramScraper:
             "curtidas": int(likes),
             "comentarios": int(comments),
             "compartilhamentos": 0,
+            "thumbnail": _thumbnail_from_graphql_media(media),
         }
 
     def fetch_post_graphql(self, shortcode: str, referer: str | None = None) -> dict | None:
@@ -222,16 +240,21 @@ class InstagramScraper:
             return None
 
         metrics = {"visualizacoes": 0, "curtidas": 0, "comentarios": 0, "compartilhamentos": 0}
+        thumbnail = ""
         source = "http"
 
         gql = self.fetch_post_graphql(shortcode, referer=url)
         if gql and any(gql.values()):
             metrics = {k: max(metrics[k], gql[k]) for k in metrics}
+            thumbnail = gql.get("thumbnail") or ""
             source = "graphql"
 
-        if not metrics["curtidas"] or not metrics["comentarios"]:
+        html_page = None
+        if not metrics["curtidas"] or not metrics["comentarios"] or not thumbnail:
             html_page = self._fetch(url, BOT_UA)
             if html_page:
+                if not thumbnail:
+                    thumbnail = _thumbnail_from_html(html_page)
                 m = re.search(r'og:description" content="([^"]+)"', html_page)
                 if m:
                     parsed = _parse_metrics_text(htmlmod.unescape(m.group(1)))
@@ -249,20 +272,22 @@ class InstagramScraper:
             curtidas=metrics["curtidas"],
             comentarios=metrics["comentarios"],
             compartilhamentos=metrics["compartilhamentos"],
+            thumbnail=thumbnail,
             source=source,
         )
 
     def _enrich_post_views(self, post: PostMetrics) -> PostMetrics:
-        if post.visualizacoes:
-            return post
         gql = self.fetch_post_graphql(post.shortcode, referer=post.url)
         if not gql:
             return post
-        post.visualizacoes = max(post.visualizacoes, gql["visualizacoes"])
+        if not post.visualizacoes:
+            post.visualizacoes = max(post.visualizacoes, gql["visualizacoes"])
         post.curtidas = max(post.curtidas, gql["curtidas"])
         post.comentarios = max(post.comentarios, gql["comentarios"])
+        if not post.thumbnail:
+            post.thumbnail = gql.get("thumbnail") or ""
         if gql["visualizacoes"]:
-            post.source = "graphql" if post.source == "api" else post.source
+            post.source = "graphql" if post.source in ("api", "feed") else post.source
         self._sleep()
         return post
 
@@ -370,9 +395,10 @@ class InstagramScraper:
                         curtidas=metrics["curtidas"],
                         comentarios=metrics["comentarios"],
                         compartilhamentos=metrics["compartilhamentos"],
+                        thumbnail=_thumbnail_from_feed_item(item),
                         source="feed",
                     )
-                    if not post.visualizacoes:
+                    if not post.visualizacoes or not post.thumbnail:
                         post = self._enrich_post_views(post)
                     posts.append(post)
                     if len(posts) >= max_posts:
@@ -434,9 +460,10 @@ class InstagramScraper:
                         curtidas=int(node.get("edge_liked_by", {}).get("count") or 0),
                         comentarios=int(node.get("edge_media_to_comment", {}).get("count") or 0),
                         compartilhamentos=0,
+                        thumbnail=node.get("thumbnail_src") or node.get("display_url") or "",
                         source="api",
                     )
-                    if not post.visualizacoes:
+                    if not post.visualizacoes or not post.thumbnail:
                         post = self._enrich_post_views(post)
                     posts.append(post)
                     self._sleep()
