@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ENGAJAMENTO_DATA = ROOT / "data" / "engajamento.json"
 ENGAJAMENTO_HTML = ROOT / "engajamento" / "index.html"
 THUMBS_DIR = ROOT / "engajamento" / "thumbs"
+DEFAULT_THUMB = "/engajamento/thumbs/clauth-default.svg"
 MAX_POSTS_LABEL = DEFAULT_MAX_POSTS
 
 
@@ -241,8 +242,6 @@ def compute_engajamento(
     top5 = [r for r in rows if r["engajamento_total"] > 0][:5]
     max_eng = top5[0]["engajamento_total"] if top5 else 1
     top_posts = _build_top_posts(rows, limit=12)
-    _backfill_missing_thumbnails(top_posts)
-    _cache_post_thumbnails(top_posts)
 
     return {
         "titulo": "Engajamento Instagram",
@@ -271,21 +270,13 @@ def compute_engajamento(
 
 def _render_post_card(post: dict, rank: int | None = None) -> str:
     link = html.escape(post["url"])
-    thumb_src = post.get("thumbnail_local") or post.get("thumbnail") or ""
     rank_badge = f'<span class="post-rank">#{rank}</span>' if rank else ""
-    if thumb_src:
-        thumb_html = (
-            f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link">'
-            f'<img class="post-thumb" src="{html.escape(thumb_src)}" '
-            f'referrerpolicy="no-referrer" '
-            f'alt="Publicação {html.escape(post["pagina"])}" loading="lazy">'
-            f"</a>"
-        )
-    else:
-        thumb_html = (
-            f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link post-thumb-empty">'
-            f'<span>📷</span></a>'
-        )
+    thumb_html = (
+        f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="post-thumb-link">'
+        f'<img class="post-thumb" src="{DEFAULT_THUMB}" '
+        f'alt="Hot Clauth IA — {html.escape(post["pagina"])}" loading="lazy">'
+        f"</a>"
+    )
     return f"""
     <article class="post-card">
       {rank_badge}
@@ -307,8 +298,6 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
         _mark_hot_pages(data["paginas"])
 
     top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=12)
-    _backfill_missing_thumbnails(top_posts)
-    _cache_post_thumbnails(top_posts)
 
     max_posts = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
     hot_count = sum(1 for p in data["paginas"] if p.get("hot"))
@@ -461,11 +450,7 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       padding: 0.2rem 0.45rem; border-radius: 20px;
     }}
     .post-thumb-link {{ display: block; aspect-ratio: 1; background: #efefef; }}
-    .post-thumb {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
-    .post-thumb-empty {{
-      display: flex; align-items: center; justify-content: center;
-      height: 100%; min-height: 120px; font-size: 2rem; color: var(--muted);
-    }}
+    .post-thumb {{ width: 100%; height: 100%; object-fit: cover; display: block; background: #111; }}
     .post-card-body {{ padding: 0.6rem 0.65rem 0.7rem; }}
     .post-page {{ font-size: 0.72rem; font-weight: 700; line-height: 1.3; }}
     .post-handle {{ font-size: 0.65rem; color: var(--muted); margin-top: 0.1rem; }}
