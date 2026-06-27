@@ -956,7 +956,7 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
       <div class="update-pill">{updated_at}</div>
       <a href="/engajamento" class="btn-engajamento" aria-label="Ver engajamento das páginas">
         <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
-        Engajamento das Páginas
+        Engajamento Instagram
       </a>
     </div>
   </header>

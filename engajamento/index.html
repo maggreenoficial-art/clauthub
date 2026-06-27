@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clauth Hub — Engajamento das Páginas</title>
+  <title>Clauth Hub — Engajamento Instagram</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --ig-gradient: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-      --fb: #1877F2; --bg: #000; --surface: #fff; --text: #262626; --muted: #8e8e8e; --border: #efefef;
+      --bg: #000; --surface: #fff; --text: #262626; --muted: #8e8e8e; --border: #efefef;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Inter, sans-serif; background: var(--bg); color: #fff; min-height: 100dvh; }
@@ -36,18 +36,22 @@
     main { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
     .section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); margin: 1.5rem 0 0.75rem; }
     .kpi-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 0.65rem; }
-    @media(min-width:640px){ .kpi-grid{ grid-template-columns:repeat(4,1fr); } }
+    @media(min-width:640px){ .kpi-grid{ grid-template-columns:repeat(3,1fr); } }
+    @media(min-width:900px){ .kpi-grid{ grid-template-columns:repeat(6,1fr); } }
     .kpi-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1rem; }
-    .kpi-card.highlight { background: linear-gradient(135deg,rgba(240,148,51,0.15),rgba(188,24,136,0.15)); border-color: rgba(188,24,136,0.3); }
+    .kpi-card.highlight { background: linear-gradient(135deg,rgba(240,148,51,0.15),rgba(188,24,136,0.15)); border-color: rgba(188,24,136,0.3); grid-column: span 2; }
+    @media(min-width:900px){ .kpi-card.highlight{ grid-column: span 1; } }
     .kpi-label { font-size: 0.68rem; text-transform: uppercase; color: rgba(255,255,255,0.45); }
-    .kpi-value { font-size: 1.45rem; font-weight: 800; margin-top: 0.25rem; }
+    .kpi-value { font-size: 1.35rem; font-weight: 800; margin-top: 0.25rem; }
     .kpi-card.highlight .kpi-value { background: var(--ig-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .panel { background: var(--surface); border-radius: 18px; padding: 1.15rem; color: var(--text); margin-top: 0.65rem; }
+    .panel { background: var(--surface); border-radius: 18px; padding: 1.15rem; color: var(--text); margin-top: 0.65rem; overflow-x: auto; }
     .panel h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.85rem; }
-    .chart-label { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; }
+    .empty-note { font-size: 0.78rem; color: var(--muted); }
+    .chart-label { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.15rem; }
+    .chart-sub { font-size: 0.68rem; color: var(--muted); margin-bottom: 0.35rem; }
     .chart-bar-bg { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; margin-bottom: 0.65rem; }
     .chart-bar { height: 100%; background: var(--ig-gradient); border-radius: 4px; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 720px; }
     th { text-align: left; padding: 0.6rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }
     td { padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .td-handle { color: var(--muted); font-size: 0.72rem; display: block; }
@@ -63,163 +67,199 @@
         <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></div>
         <span class="brand-name">Clauth Hub</span>
       </div>
-      <span class="doc-badge">Engajamento</span>
+      <span class="doc-badge">Scraper IG</span>
     </div>
-    <h1 class="header-title">Engajamento das Páginas</h1>
-    <p class="header-meta"><strong>Atualização Automática</strong><br>Curtidas, comentários e compartilhamentos nos criativos · via IA + Meta</p>
+    <h1 class="header-title">Engajamento Instagram</h1>
+    <p class="header-meta"><strong>Raspagem automática de publicações</strong><br>
+    156 publicações analisadas · views, curtidas, comentários e compartilhamentos · 1x/dia às 08:00</p>
     <div class="update-pill">Dados coletados diariamente às 08:00 · Última coleta: 27/06/2026 às 08:00</div>
     <a class="back-link" href="/">← Voltar ao acompanhamento</a>
   </header>
   <main>
     <p class="section-title">Resumo geral</p>
     <div class="kpi-grid">
-      <div class="kpi-card highlight"><div class="kpi-label">Engajamento total</div><div class="kpi-value">57.1K</div></div>
-      <div class="kpi-card"><div class="kpi-label">Facebook</div><div class="kpi-value">33.6K</div></div>
-      <div class="kpi-card"><div class="kpi-label">Instagram</div><div class="kpi-value">23.5K</div></div>
-      <div class="kpi-card"><div class="kpi-label">Média por página</div><div class="kpi-value">4.079</div></div>
+      <div class="kpi-card highlight"><div class="kpi-label">Engajamento total</div><div class="kpi-value">1.8M</div></div>
+      <div class="kpi-card"><div class="kpi-label">Publicações</div><div class="kpi-value">156</div></div>
+      <div class="kpi-card"><div class="kpi-label">Visualizações</div><div class="kpi-value">1.7M</div></div>
+      <div class="kpi-card"><div class="kpi-label">Curtidas</div><div class="kpi-value">150.1K</div></div>
+      <div class="kpi-card"><div class="kpi-label">Comentários</div><div class="kpi-value">1.185</div></div>
+      <div class="kpi-card"><div class="kpi-label">Compartilhamentos</div><div class="kpi-value">0</div></div>
     </div>
     <p class="section-title">Top 5 páginas</p>
-    <div class="panel"><h3>Maior engajamento</h3>
+    <div class="panel"><h3>Maior engajamento raspado</h3>
         <div class="top-item">
-          <div class="chart-label"><span>Jacarepaguá Agora RJ</span><span>10.1K</span></div>
+          <div class="chart-label"><span>Tá Rolando nos Lagos</span><span>1.1M</span></div>
+          <div class="chart-sub">12 publicações · 968.7K views · 93.8K curtidas · 529 coment.</div>
           <div class="chart-bar-bg"><div class="chart-bar" style="width:100%"></div></div>
         </div>
         <div class="top-item">
-          <div class="chart-label"><span>Pulso da Serra</span><span>9.687</span></div>
-          <div class="chart-bar-bg"><div class="chart-bar" style="width:95%"></div></div>
+          <div class="chart-label"><span>Pulso da Serra</span><span>603.9K</span></div>
+          <div class="chart-sub">12 publicações · 549.1K views · 54.3K curtidas · 522 coment.</div>
+          <div class="chart-bar-bg"><div class="chart-bar" style="width:56%"></div></div>
         </div>
         <div class="top-item">
-          <div class="chart-label"><span>Segurança em Pauta RJ</span><span>7.355</span></div>
-          <div class="chart-bar-bg"><div class="chart-bar" style="width:72%"></div></div>
+          <div class="chart-label"><span>Segurança em Pauta RJ</span><span>23.8K</span></div>
+          <div class="chart-sub">12 publicações · 23.4K views · 318 curtidas · 5 coment.</div>
+          <div class="chart-bar-bg"><div class="chart-bar" style="width:2%"></div></div>
         </div>
         <div class="top-item">
-          <div class="chart-label"><span>Caxias em Foco</span><span>6.777</span></div>
-          <div class="chart-bar-bg"><div class="chart-bar" style="width:66%"></div></div>
+          <div class="chart-label"><span>Ramal da Baixada</span><span>18.3K</span></div>
+          <div class="chart-sub">12 publicações · 18.1K views · 208 curtidas · 19 coment.</div>
+          <div class="chart-bar-bg"><div class="chart-bar" style="width:1%"></div></div>
         </div>
         <div class="top-item">
-          <div class="chart-label"><span>Na Pauta RJ</span><span>5.893</span></div>
-          <div class="chart-bar-bg"><div class="chart-bar" style="width:58%"></div></div>
+          <div class="chart-label"><span>Alerta Rio 360</span><span>16.3K</span></div>
+          <div class="chart-sub">12 publicações · 15.8K views · 411 curtidas · 21 coment.</div>
+          <div class="chart-bar-bg"><div class="chart-bar" style="width:1%"></div></div>
         </div></div>
     <p class="section-title">Todas as páginas (14)</p>
     <div class="panel">
       <table>
-        <thead><tr><th>#</th><th>Página</th><th>Facebook</th><th>Instagram</th><th>Total</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Página</th><th>Views</th><th>Curtidas</th><th>Coment.</th><th>Shares</th><th>Total</th><th></th></tr></thead>
         <tbody>
         <tr>
           <td>1</td>
-          <td><strong>Jacarepaguá Agora RJ</strong><span class="td-handle">@jacarepagua_agora</span></td>
-          <td>7.260</td>
-          <td>2.866</td>
-          <td><strong>10.1K</strong></td>
+          <td><strong>Tá Rolando nos Lagos</strong><span class="td-handle">@tarolandonoslagos · 12 pub.</span></td>
+          <td>968.7K</td>
+          <td>93.8K</td>
+          <td>529</td>
+          <td>0</td>
+          <td><strong>1.1M</strong></td>
           <td><div class="bar-wrap"><div class="bar" style="width:100%"></div></div></td>
         </tr>
         <tr>
           <td>2</td>
-          <td><strong>Pulso da Serra</strong><span class="td-handle">@pulsodaserra</span></td>
-          <td>6.539</td>
-          <td>3.148</td>
-          <td><strong>9.687</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:95%"></div></div></td>
+          <td><strong>Pulso da Serra</strong><span class="td-handle">@pulsodaserra · 12 pub.</span></td>
+          <td>549.1K</td>
+          <td>54.3K</td>
+          <td>522</td>
+          <td>0</td>
+          <td><strong>603.9K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:56%"></div></div></td>
         </tr>
         <tr>
           <td>3</td>
-          <td><strong>Segurança em Pauta RJ</strong><span class="td-handle">@segurancaempautarj</span></td>
-          <td>2.608</td>
-          <td>4.747</td>
-          <td><strong>7.355</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:72%"></div></div></td>
+          <td><strong>Segurança em Pauta RJ</strong><span class="td-handle">@segurancaempautarj · 12 pub.</span></td>
+          <td>23.4K</td>
+          <td>318</td>
+          <td>5</td>
+          <td>0</td>
+          <td><strong>23.8K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:2%"></div></div></td>
         </tr>
         <tr>
           <td>4</td>
-          <td><strong>Caxias em Foco</strong><span class="td-handle">@caxiasemfocorj</span></td>
-          <td>6.777</td>
+          <td><strong>Ramal da Baixada</strong><span class="td-handle">@ramaldabaixada · 12 pub.</span></td>
+          <td>18.1K</td>
+          <td>208</td>
+          <td>19</td>
           <td>0</td>
-          <td><strong>6.777</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:66%"></div></div></td>
+          <td><strong>18.3K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>5</td>
-          <td><strong>Na Pauta RJ</strong><span class="td-handle">@napautarj</span></td>
-          <td>3.401</td>
-          <td>2.492</td>
-          <td><strong>5.893</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:58%"></div></div></td>
+          <td><strong>Alerta Rio 360</strong><span class="td-handle">@alertario360 · 12 pub.</span></td>
+          <td>15.8K</td>
+          <td>411</td>
+          <td>21</td>
+          <td>0</td>
+          <td><strong>16.3K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>6</td>
-          <td><strong>Alerta Rio 360</strong><span class="td-handle">@alertario360</span></td>
-          <td>677</td>
-          <td>2.697</td>
-          <td><strong>3.374</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:33%"></div></div></td>
+          <td><strong>Caxias em Foco</strong><span class="td-handle">@caxiasemfocorj · 12 pub.</span></td>
+          <td>15.7K</td>
+          <td>133</td>
+          <td>16</td>
+          <td>0</td>
+          <td><strong>15.8K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>7</td>
-          <td><strong>Fala Zona Oeste RJ</strong><span class="td-handle">@falazoeste</span></td>
-          <td>848</td>
-          <td>2.095</td>
-          <td><strong>2.943</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:29%"></div></div></td>
+          <td><strong>Na Pauta RJ</strong><span class="td-handle">@napautarj · 12 pub.</span></td>
+          <td>13.5K</td>
+          <td>87</td>
+          <td>12</td>
+          <td>0</td>
+          <td><strong>13.6K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>8</td>
-          <td><strong>Tá Rolando nos Lagos</strong><span class="td-handle">@tarolandonoslagos</span></td>
-          <td>1.421</td>
-          <td>1.307</td>
-          <td><strong>2.728</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:26%"></div></div></td>
+          <td><strong>Fala Zona Oeste RJ</strong><span class="td-handle">@falazoeste · 12 pub.</span></td>
+          <td>12.4K</td>
+          <td>302</td>
+          <td>17</td>
+          <td>0</td>
+          <td><strong>12.7K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>9</td>
-          <td><strong>Giro Baixada RJ</strong><span class="td-handle">@girobaixadarj</span></td>
+          <td><strong>Giro Baixada RJ</strong><span class="td-handle">@girobaixadarj · 12 pub.</span></td>
+          <td>12.1K</td>
+          <td>172</td>
+          <td>13</td>
           <td>0</td>
-          <td>2.728</td>
-          <td><strong>2.728</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:26%"></div></div></td>
+          <td><strong>12.3K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>10</td>
-          <td><strong>Radar Nova Iguaçu</strong><span class="td-handle">@radarnovaiguacu</span></td>
-          <td>1.713</td>
+          <td><strong>Jacarepaguá Agora RJ</strong><span class="td-handle">@jacarepagua_agora · 12 pub.</span></td>
+          <td>11.2K</td>
+          <td>139</td>
+          <td>8</td>
           <td>0</td>
-          <td><strong>1.713</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:16%"></div></div></td>
+          <td><strong>11.4K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>11</td>
-          <td><strong>Radar Campos</strong><span class="td-handle">@radarcampos</span></td>
+          <td><strong>Radar Nova Iguaçu</strong><span class="td-handle">@radarnovaiguacu · 12 pub.</span></td>
+          <td>10.6K</td>
+          <td>157</td>
+          <td>16</td>
           <td>0</td>
-          <td>1.455</td>
-          <td><strong>1.455</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:14%"></div></div></td>
+          <td><strong>10.8K</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:1%"></div></div></td>
         </tr>
         <tr>
           <td>12</td>
-          <td><strong>Costa Verde em Pauta</strong><span class="td-handle">@costaverdeempauta</span></td>
-          <td>933</td>
+          <td><strong>Costa Verde em Pauta</strong><span class="td-handle">@costaverdeempauta · 12 pub.</span></td>
+          <td>5.124</td>
+          <td>26</td>
+          <td>6</td>
           <td>0</td>
-          <td><strong>933</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:9%"></div></div></td>
+          <td><strong>5.156</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:0%"></div></div></td>
         </tr>
         <tr>
           <td>13</td>
-          <td><strong>Ramal da Baixada</strong><span class="td-handle">@ramaldabaixada</span></td>
-          <td>831</td>
+          <td><strong>Radar Campos</strong><span class="td-handle">@radarcampos · 12 pub.</span></td>
+          <td>3.229</td>
+          <td>18</td>
+          <td>1</td>
           <td>0</td>
-          <td><strong>831</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:8%"></div></div></td>
+          <td><strong>3.248</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:0%"></div></div></td>
         </tr>
         <tr>
           <td>14</td>
-          <td><strong>Acorda Zona Norte</strong><span class="td-handle">@acordanorterj</span></td>
-          <td>564</td>
+          <td><strong>Acorda Zona Norte</strong><span class="td-handle">@acordanorterj · —</span></td>
           <td>0</td>
-          <td><strong>564</strong></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:5%"></div></div></td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td><strong>0</strong></td>
+          <td><div class="bar-wrap"><div class="bar" style="width:0%"></div></div></td>
         </tr></tbody>
       </table>
     </div>
   </main>
-  <footer class="app-footer">Clauth Hub · Engajamento dos criativos · atualização 1x por dia às 08:00</footer>
+  <footer class="app-footer">Clauth Hub · Scraper de publicações Instagram · API + embed + IA</footer>
 </body>
 </html>
