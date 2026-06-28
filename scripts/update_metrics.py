@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,14 +22,109 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 CONFIG_PATH = ROOT / "config" / "pages.json"
 METRICS_PATH = ROOT / "data" / "metrics.json"
+METRICS_CACHE_PATH = ROOT / "config" / "metrics_cache.json"
 INDEX_PATH = ROOT / "index.html"
 ENV_PATH = ROOT / ".env"
 
 BOT_UA = "facebookexternalhit/1.1"
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+IG_APP_ID = "936619743392459"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+PAGE_FETCH_DELAY = 2.5
 
 FB_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
 IG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>'
+
+
+def _clean_api_key(api_key: str | None) -> str | None:
+    if not api_key or api_key.strip() == "sua-chave-aqui":
+        return None
+    return api_key.strip()
+
+
+def load_metrics_cache() -> dict[int, dict]:
+    if not METRICS_CACHE_PATH.exists():
+        return {}
+    try:
+        data = json.loads(METRICS_CACHE_PATH.read_text(encoding="utf-8"))
+        return {int(k): v for k, v in data.get("pages", {}).items()}
+    except (json.JSONDecodeError, OSError, ValueError, TypeError):
+        return {}
+
+
+def save_metrics_cache(all_metrics: list[dict]) -> None:
+    payload = {
+        "updated_at": datetime.now(COLLECTION_TZ).isoformat(),
+        "pages": {str(m["id"]): m for m in all_metrics},
+    }
+    METRICS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    METRICS_CACHE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _merge_section(section: str, new: dict, old: dict | None) -> dict:
+    merged = dict(new.get(section) or {})
+    prev = (old or {}).get(section) or {}
+    for key, value in merged.items():
+        if value is None and prev.get(key) is not None:
+            merged[key] = prev[key]
+    if section == "facebook":
+        merged["curtidas_fmt"] = format_count(merged.get("curtidas"))
+        merged["falando_fmt"] = format_count(merged.get("falando_sobre"))
+    elif section == "instagram":
+        merged["seguidores_fmt"] = format_count(merged.get("seguidores"))
+        merged["seguindo_fmt"] = format_count(merged.get("seguindo"))
+        merged["posts_fmt"] = format_count(merged.get("posts"))
+    return merged
+
+
+def merge_with_cache(metrics: dict, page_id: int, cache: dict[int, dict]) -> dict:
+    old = cache.get(page_id)
+    if not old:
+        return metrics
+    merged = dict(metrics)
+    merged["facebook"] = _merge_section("facebook", metrics, old)
+    merged["instagram"] = _merge_section("instagram", metrics, old)
+    if metrics.get("source") == "http" and old.get("source") not in (None, "http"):
+        merged["source"] = f"{metrics.get('source', 'http')}+cache"
+    return merged
+
+
+def fetch_instagram_api_metrics(handle: str) -> dict:
+    """Fallback via API interna quando og:description falha (429)."""
+    handle = handle.lstrip("@")
+    profile_url = f"https://www.instagram.com/{handle}/"
+    session = requests.Session()
+    session.headers.update({"User-Agent": BROWSER_UA, "Accept-Language": "pt-BR,pt;q=0.9"})
+    try:
+        session.get(profile_url, timeout=25)
+        csrf = session.cookies.get("csrftoken", "")
+        r = session.get(
+            f"https://www.instagram.com/api/v1/users/web_profile_info/?username={handle}",
+            headers={
+                "X-IG-App-ID": IG_APP_ID,
+                "X-CSRFToken": csrf,
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": profile_url,
+            },
+            timeout=25,
+        )
+        if r.status_code == 429:
+            time.sleep(3)
+            return {}
+        if r.status_code != 200:
+            return {}
+        user = r.json().get("data", {}).get("user", {})
+        return {
+            "seguidores": user.get("edge_followed_by", {}).get("count"),
+            "seguindo": user.get("edge_follow", {}).get("count"),
+            "posts": user.get("edge_owner_to_timeline_media", {}).get("count"),
+        }
+    except (requests.RequestException, json.JSONDecodeError, AttributeError, TypeError) as exc:
+        print(f"  [aviso] API Instagram @{handle}: {exc}", file=sys.stderr)
+        return {}
 
 
 def fetch_og_description(url: str) -> str | None:
@@ -133,7 +229,7 @@ def openrouter_extract(
     r = requests.post(
         OPENROUTER_URL,
         headers={
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {api_key.strip()}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://visucliente.local",
             "X-Title": "Clauth Hub",
@@ -154,7 +250,7 @@ def openrouter_extract(
     }
 
 
-def collect_metrics(page: dict, api_key: str | None, model: str) -> dict:
+def collect_metrics(page: dict, api_key: str | None, model: str, cache: dict[int, dict] | None = None) -> dict:
     fb_id = page.get("facebook_id")
     ig_handle = page["instagram_handle"]
 
@@ -166,6 +262,15 @@ def collect_metrics(page: dict, api_key: str | None, model: str) -> dict:
 
     fb = parse_facebook(fb_desc) if fb_desc else {}
     ig = parse_instagram(ig_desc) if ig_desc else {}
+    source = "http"
+
+    if ig.get("seguidores") is None:
+        api_ig = fetch_instagram_api_metrics(ig_handle)
+        for key in ("seguidores", "seguindo", "posts"):
+            if ig.get(key) is None and api_ig.get(key) is not None:
+                ig[key] = api_ig[key]
+        if api_ig.get("seguidores") is not None:
+            source = "api"
 
     needs_ai = (
         api_key
@@ -189,14 +294,11 @@ def collect_metrics(page: dict, api_key: str | None, model: str) -> dict:
                 ig["seguindo"] = ai.get("seguindo")
             if ig.get("posts") is None:
                 ig["posts"] = ai.get("posts")
-            source = "http+openrouter"
+            source = "http+openrouter" if source == "http" else f"{source}+openrouter"
         except Exception as exc:
             print(f"  [aviso] OpenRouter falhou: {exc}", file=sys.stderr)
-            source = "http"
-    else:
-        source = "http"
 
-    return {
+    metrics = {
         "id": page["id"],
         "name": page["name"],
         "facebook": {
@@ -215,6 +317,9 @@ def collect_metrics(page: dict, api_key: str | None, model: str) -> dict:
         },
         "source": source,
     }
+    if cache is not None:
+        metrics = merge_with_cache(metrics, page["id"], cache)
+    return metrics
 
 
 def fetch_ig_followers_for_relatorio(
@@ -239,6 +344,12 @@ def fetch_ig_followers_for_relatorio(
             seguidores = alt_ig.get("seguidores")
             if seguidores is not None:
                 source = "http-alt"
+
+    if seguidores is None:
+        api_ig = fetch_instagram_api_metrics(handle)
+        seguidores = api_ig.get("seguidores")
+        if seguidores is not None:
+            source = "api"
 
     if seguidores is None and api_key:
         try:
@@ -1121,19 +1232,21 @@ def main() -> int:
     if "--html-only" in sys.argv:
         return regenerate_html_only()
     load_dotenv(ENV_PATH)
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = _clean_api_key(os.getenv("OPENROUTER_API_KEY"))
     model = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
 
-    if not api_key or api_key == "sua-chave-aqui":
-        print("Aviso: OPENROUTER_API_KEY não configurada. Usando apenas busca HTTP.", file=sys.stderr)
+    if not api_key:
+        print("Aviso: OPENROUTER_API_KEY não configurada. Usando apenas busca HTTP/API.", file=sys.stderr)
 
     pages = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    metrics_cache = load_metrics_cache()
     print(f"Atualizando {len(pages)} páginas...")
 
     all_metrics = []
     for page in pages:
         print(f"• {page['name']}")
-        all_metrics.append(collect_metrics(page, api_key, model))
+        all_metrics.append(collect_metrics(page, api_key, model, metrics_cache))
+        time.sleep(PAGE_FETCH_DELAY)
 
     now = datetime.now(COLLECTION_TZ)
     updated_at = collection_label(now)
@@ -1147,6 +1260,7 @@ def main() -> int:
 
     METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
     METRICS_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    save_metrics_cache(all_metrics)
     index_pages, index_metrics = sort_pages_for_index(pages, all_metrics)
     INDEX_PATH.write_text(render_index(index_pages, index_metrics, updated_at, model), encoding="utf-8")
 

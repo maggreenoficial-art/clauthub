@@ -1,0 +1,271 @@
+{
+  "updated_at": "2026-06-28T08:00:30.162346-03:00",
+  "pages": {
+    "1": {
+      "id": 1,
+      "name": "Alerta Rio 360",
+      "facebook": {
+        "curtidas": 576,
+        "falando_sobre": 118,
+        "curtidas_fmt": "576",
+        "falando_fmt": "118"
+      },
+      "instagram": {
+        "seguidores": 8074,
+        "seguindo": 587,
+        "posts": 828,
+        "seguidores_fmt": "8.074",
+        "seguindo_fmt": "587",
+        "posts_fmt": "828"
+      },
+      "source": "http"
+    },
+    "2": {
+      "id": 2,
+      "name": "Fala Zona Oeste RJ",
+      "facebook": {
+        "curtidas": 709,
+        "falando_sobre": 140,
+        "curtidas_fmt": "709",
+        "falando_fmt": "140"
+      },
+      "instagram": {
+        "seguidores": 7310,
+        "seguindo": 1516,
+        "posts": 685,
+        "seguidores_fmt": "7.310",
+        "seguindo_fmt": "1.516",
+        "posts_fmt": "685"
+      },
+      "source": "http"
+    },
+    "3": {
+      "id": 3,
+      "name": "Segurança em Pauta RJ",
+      "facebook": {
+        "curtidas": 2346,
+        "falando_sobre": 402,
+        "curtidas_fmt": "2.346",
+        "falando_fmt": "402"
+      },
+      "instagram": {
+        "seguidores": 7711,
+        "seguindo": 721,
+        "posts": 623,
+        "seguidores_fmt": "7.711",
+        "seguindo_fmt": "721",
+        "posts_fmt": "623"
+      },
+      "source": "http"
+    },
+    "4": {
+      "id": 4,
+      "name": "Jacarepaguá Agora RJ",
+      "facebook": {
+        "curtidas": 5708,
+        "falando_sobre": 1575,
+        "curtidas_fmt": "5.708",
+        "falando_fmt": "1.575"
+      },
+      "instagram": {
+        "seguidores": 8812,
+        "seguindo": 1164,
+        "posts": 675,
+        "seguidores_fmt": "8.812",
+        "seguindo_fmt": "1.164",
+        "posts_fmt": "675"
+      },
+      "source": "http"
+    },
+    "5": {
+      "id": 5,
+      "name": "Na Pauta RJ",
+      "facebook": {
+        "curtidas": 3238,
+        "falando_sobre": 225,
+        "curtidas_fmt": "3.238",
+        "falando_fmt": "225"
+      },
+      "instagram": {
+        "seguidores": 17000,
+        "seguindo": 653,
+        "posts": 521,
+        "seguidores_fmt": "17K",
+        "seguindo_fmt": "653",
+        "posts_fmt": "521"
+      },
+      "source": "http"
+    },
+    "6": {
+      "id": 6,
+      "name": "Pulso da Serra",
+      "facebook": {
+        "curtidas": 5299,
+        "falando_sobre": 1362,
+        "curtidas_fmt": "5.299",
+        "falando_fmt": "1.362"
+      },
+      "instagram": {
+        "seguidores": 8558,
+        "seguindo": 492,
+        "posts": 447,
+        "seguidores_fmt": "8.558",
+        "seguindo_fmt": "492",
+        "posts_fmt": "447"
+      },
+      "source": "http"
+    },
+    "7": {
+      "id": 7,
+      "name": "Radar Campos",
+      "facebook": {
+        "curtidas": null,
+        "falando_sobre": null,
+        "curtidas_fmt": "—",
+        "falando_fmt": "—"
+      },
+      "instagram": {
+        "seguidores": 4057,
+        "seguindo": 202,
+        "posts": 425,
+        "seguidores_fmt": "4.057",
+        "seguindo_fmt": "202",
+        "posts_fmt": "425"
+      },
+      "source": "http"
+    },
+    "8": {
+      "id": 8,
+      "name": "Tá Rolando nos Lagos",
+      "facebook": {
+        "curtidas": 838,
+        "falando_sobre": 661,
+        "curtidas_fmt": "838",
+        "falando_fmt": "661"
+      },
+      "instagram": {
+        "seguidores": 5504,
+        "seguindo": 835,
+        "posts": 476,
+        "seguidores_fmt": "5.504",
+        "seguindo_fmt": "835",
+        "posts_fmt": "476"
+      },
+      "source": "http"
+    },
+    "9": {
+      "id": 9,
+      "name": "Giro Baixada RJ",
+      "facebook": {
+        "curtidas": null,
+        "falando_sobre": null,
+        "curtidas_fmt": "—",
+        "falando_fmt": "—"
+      },
+      "instagram": {
+        "seguidores": 7306,
+        "seguindo": 918,
+        "posts": 796,
+        "seguidores_fmt": "7.306",
+        "seguindo_fmt": "918",
+        "posts_fmt": "796"
+      },
+      "source": "http"
+    },
+    "10": {
+      "id": 10,
+      "name": "Radar Nova Iguaçu",
+      "facebook": {
+        "curtidas": 1220,
+        "falando_sobre": 493,
+        "curtidas_fmt": "1.220",
+        "falando_fmt": "493"
+      },
+      "instagram": {
+        "seguidores": 6727,
+        "seguindo": 831,
+        "posts": 674,
+        "seguidores_fmt": "6.727",
+        "seguindo_fmt": "831",
+        "posts_fmt": "674"
+      },
+      "source": "http"
+    },
+    "11": {
+      "id": 11,
+      "name": "Ramal da Baixada",
+      "facebook": {
+        "curtidas": 664,
+        "falando_sobre": 109,
+        "curtidas_fmt": "664",
+        "falando_fmt": "109"
+      },
+      "instagram": {
+        "seguidores": 6935,
+        "seguindo": 978,
+        "posts": 773,
+        "seguidores_fmt": "6.935",
+        "seguindo_fmt": "978",
+        "posts_fmt": "773"
+      },
+      "source": "http"
+    },
+    "12": {
+      "id": 12,
+      "name": "Acorda Zona Norte",
+      "facebook": {
+        "curtidas": 415,
+        "falando_sobre": 160,
+        "curtidas_fmt": "415",
+        "falando_fmt": "160"
+      },
+      "instagram": {
+        "seguidores": null,
+        "seguindo": null,
+        "posts": null,
+        "seguidores_fmt": "—",
+        "seguindo_fmt": "—",
+        "posts_fmt": "—"
+      },
+      "source": "http"
+    },
+    "13": {
+      "id": 13,
+      "name": "Costa Verde em Pauta",
+      "facebook": {
+        "curtidas": 666,
+        "falando_sobre": 330,
+        "curtidas_fmt": "666",
+        "falando_fmt": "330"
+      },
+      "instagram": {
+        "seguidores": 5825,
+        "seguindo": 271,
+        "posts": 395,
+        "seguidores_fmt": "5.825",
+        "seguindo_fmt": "271",
+        "posts_fmt": "395"
+      },
+      "source": "http"
+    },
+    "14": {
+      "id": 14,
+      "name": "Caxias em Foco",
+      "facebook": {
+        "curtidas": 6388,
+        "falando_sobre": 443,
+        "curtidas_fmt": "6.388",
+        "falando_fmt": "443"
+      },
+      "instagram": {
+        "seguidores": 9406,
+        "seguindo": 979,
+        "posts": 681,
+        "seguidores_fmt": "9.406",
+        "seguindo_fmt": "979",
+        "posts_fmt": "681"
+      },
+      "source": "http"
+    }
+  }
+}
