@@ -19,6 +19,7 @@ ENGAJAMENTO_HTML = ROOT / "engajamento" / "index.html"
 THUMBS_DIR = ROOT / "engajamento" / "thumbs"
 DEFAULT_THUMB = "/engajamento/thumbs/clauth-default.svg"
 MAX_POSTS_LABEL = DEFAULT_MAX_POSTS
+TOP_POSTS_GLOBAL = 24
 
 
 def _post_engagement(post: dict) -> int:
@@ -45,7 +46,7 @@ def _serialize_post(post: dict, pagina: str, handle: str) -> dict:
     }
 
 
-def _build_top_posts(rows: list, limit: int = 12) -> list:
+def _build_top_posts(rows: list, limit: int = TOP_POSTS_GLOBAL) -> list:
     posts: list[dict] = []
     for row in rows:
         for post in row.get("posts") or []:
@@ -130,9 +131,16 @@ def _mark_hot_pages(rows: list) -> None:
 
         posts = r.get("posts") or []
         momentum = 0.0
-        if len(posts) >= 6:
+        if len(posts) >= 10:
+            recent = posts[:5]
+            older = posts[-5:]
+        elif len(posts) >= 6:
             recent = posts[:3]
             older = posts[-3:]
+        else:
+            recent = []
+            older = []
+        if recent and older:
             recent_avg = sum(_post_engagement(p) for p in recent) / len(recent)
             older_avg = sum(_post_engagement(p) for p in older) / len(older)
             if older_avg > 0:
@@ -170,6 +178,7 @@ def collect_page_engagement(
     profile = scraper.scrape_profile(
         handle=handle,
         fallback_post_url=post_url,
+        max_posts=DEFAULT_MAX_POSTS,
         api_key=api_key,
         model=model,
     )
@@ -241,7 +250,7 @@ def compute_engajamento(
 
     top5 = [r for r in rows if r["engajamento_total"] > 0][:5]
     max_eng = top5[0]["engajamento_total"] if top5 else 1
-    top_posts = _build_top_posts(rows, limit=12)
+    top_posts = _build_top_posts(rows, limit=TOP_POSTS_GLOBAL)
 
     return {
         "titulo": "Engajamento Instagram",
@@ -266,6 +275,69 @@ def compute_engajamento(
         "top_posts": top_posts,
         "max_engajamento": max_eng or 1,
     }
+
+
+def _posts_with_fmt(posts: list[dict]) -> list[dict]:
+    enriched: list[dict] = []
+    for p in posts:
+        eng = p.get("engajamento_total") or _post_engagement(p)
+        enriched.append({
+            **p,
+            "engajamento_total": eng,
+            "visualizacoes_fmt": _fmt_num(p.get("visualizacoes", 0)),
+            "curtidas_fmt": _fmt_num(p.get("curtidas", 0)),
+            "comentarios_fmt": _fmt_num(p.get("comentarios", 0)),
+            "engajamento_fmt": _fmt_num(eng),
+        })
+    enriched.sort(key=lambda x: x["engajamento_total"], reverse=True)
+    return enriched
+
+
+def _render_page_posts_block(page: dict, max_posts: int) -> str:
+    posts = _posts_with_fmt(page.get("posts") or [])
+    hot_badge = '<span class="hot-badge hot-badge-sm">🔥 Em tração</span>' if page.get("hot") else ""
+    block_cls = "page-block page-block-hot" if page.get("hot") else "page-block"
+    open_attr = " open" if page.get("hot") else ""
+
+    if not posts:
+        return f"""
+    <details class="{block_cls}">
+      <summary>
+        <span class="page-block-title">{html.escape(page["nome"])} {hot_badge}</span>
+        <span class="page-block-meta">{html.escape(page["handle"])} · sem publicações coletadas</span>
+      </summary>
+      <p class="empty-note">Nenhuma publicação disponível nesta coleta.</p>
+    </details>"""
+
+    max_eng = posts[0]["engajamento_total"] or 1
+    rows = ""
+    for i, p in enumerate(posts, 1):
+        pct = min(100, int(p["engajamento_total"] / max_eng * 100)) if p["engajamento_total"] else 0
+        row_cls = "post-row-top" if i <= 3 else ""
+        link = html.escape(p["url"])
+        rows += f"""
+          <tr class="{row_cls}">
+            <td>{i}</td>
+            <td><a href="{link}" target="_blank" rel="noopener noreferrer" class="post-shortlink">/{html.escape(p["shortcode"])}</a></td>
+            <td>{p["visualizacoes_fmt"]}</td>
+            <td>{p["curtidas_fmt"]}</td>
+            <td>{p["comentarios_fmt"]}</td>
+            <td><strong>{p["engajamento_fmt"]}</strong></td>
+            <td><div class="bar-wrap"><div class="bar" style="width:{pct}%"></div></div></td>
+          </tr>"""
+
+    return f"""
+    <details class="{block_cls}"{open_attr}>
+      <summary>
+        <span class="page-block-title">{html.escape(page["nome"])} {hot_badge}</span>
+        <span class="page-block-meta">{html.escape(page["handle"])} · {len(posts)}/{max_posts} publicações · total {page["engajamento_fmt"]}</span>
+      </summary>
+      <p class="panel-desc">Ordenadas por engajamento (views + curtidas + comentários). As do topo indicam a vertente de conteúdo que está funcionando.</p>
+      <table class="post-table">
+        <thead><tr><th>#</th><th>Post</th><th>Views</th><th>Curtidas</th><th>Coment.</th><th>Total</th><th></th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </details>"""
 
 
 def _render_post_card(post: dict, rank: int | None = None) -> str:
@@ -297,10 +369,11 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     if data["paginas"] and "hot" not in data["paginas"][0]:
         _mark_hot_pages(data["paginas"])
 
-    top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=12)
+    top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=TOP_POSTS_GLOBAL)
 
     max_posts = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
     hot_count = sum(1 for p in data["paginas"] if p.get("hot"))
+    pages_posts_html = "".join(_render_page_posts_block(p, max_posts) for p in data["paginas"])
 
     rows_html = ""
     for i, p in enumerate(data["paginas"], 1):
@@ -463,6 +536,36 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       display: inline-block; margin-top: 0.45rem; font-size: 0.65rem; font-weight: 600;
       color: #dc2743 !important;
     }}
+    .page-panel {{ display: flex; flex-direction: column; gap: 0.65rem; }}
+    .page-block {{
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      background: #fafafa;
+    }}
+    .page-block-hot {{ border-color: rgba(255,107,53,0.35); }}
+    .page-block summary {{
+      cursor: pointer; list-style: none; padding: 0.85rem 1rem;
+      display: flex; flex-direction: column; gap: 0.2rem;
+      background: #fff; border-bottom: 1px solid transparent;
+    }}
+    .page-block[open] summary {{ border-bottom-color: var(--border); }}
+    .page-block summary::-webkit-details-marker {{ display: none; }}
+    .page-block-title {{ font-size: 0.82rem; font-weight: 700; }}
+    .page-block-meta {{ font-size: 0.68rem; color: var(--muted); }}
+    .page-block .panel-desc {{ padding: 0.65rem 1rem 0; }}
+    .post-table {{
+      width: 100%; border-collapse: collapse; font-size: 0.72rem; min-width: 520px;
+    }}
+    .post-table th {{
+      text-align: left; padding: 0.5rem 0.65rem; font-size: 0.62rem;
+      text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border);
+      background: #fff;
+    }}
+    .post-table td {{ padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--border); vertical-align: middle; }}
+    .post-table tr.post-row-top td {{ background: rgba(220,39,67,0.04); }}
+    .post-table tr.post-row-top td:first-child {{ border-left: 3px solid #dc2743; }}
+    .post-shortlink {{ font-weight: 600; color: #dc2743 !important; font-size: 0.7rem; }}
+    .page-block .post-table {{ margin: 0.5rem 0 0.75rem; }}
+    .page-block .empty-note {{ padding: 0.75rem 1rem 1rem; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 640px; }}
     th {{ text-align: left; padding: 0.6rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }}
     td {{ padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }}
@@ -507,6 +610,12 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       <h3>Publicações com maior engajamento para análise de conteúdo</h3>
       <p class="panel-desc">Clique na miniatura ou no link para abrir no Instagram e ver o que performou melhor.</p>
       <div class="posts-grid">{top_posts_html}</div>
+    </div>
+    <p class="section-title">Análise por página · últimas {max_posts} publicações</p>
+    <div class="panel page-panel">
+      <h3>Verifique o que está funcionando em cada perfil</h3>
+      <p class="panel-desc">Expanda cada página para ver todas as publicações analisadas, da que mais engajou à que menos. Use os links para abrir no Instagram e identificar a vertente de conteúdo.</p>
+      {pages_posts_html}
     </div>
     <p class="section-title">Todas as páginas ({r["paginas"]})</p>
     <div class="panel">

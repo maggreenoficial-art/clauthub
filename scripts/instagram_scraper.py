@@ -20,8 +20,9 @@ BROWSER_UA = (
 IG_APP_ID = "936619743392459"
 POST_GRAPHQL_DOC_ID = "8845758582119845"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_MAX_POSTS = 12
+DEFAULT_MAX_POSTS = 50
 REQUEST_DELAY = 2.0
+ENRICH_VIEWS_CAP = 15
 
 
 @dataclass
@@ -345,7 +346,7 @@ class InstagramScraper:
         return None
 
     def fetch_posts_feed(self, handle: str, max_posts: int = DEFAULT_MAX_POSTS) -> list[PostMetrics]:
-        """Lista publicações recentes via /api/v1/feed/user/ (até 12 por página)."""
+        """Lista publicações recentes via /api/v1/feed/user/ (paginado, até max_posts)."""
         handle = handle.lstrip("@")
         profile_url = f"https://www.instagram.com/{handle}/"
         user_id = self.resolve_user_id(handle)
@@ -357,6 +358,7 @@ class InstagramScraper:
         csrf = self._ensure_csrf(profile_url)
         posts: list[PostMetrics] = []
         next_max_id: str | None = None
+        enriched = 0
 
         while len(posts) < max_posts:
             params = {"count": min(12, max_posts - len(posts))}
@@ -398,8 +400,9 @@ class InstagramScraper:
                         thumbnail=_thumbnail_from_feed_item(item),
                         source="feed",
                     )
-                    if not post.visualizacoes or not post.thumbnail:
+                    if enriched < ENRICH_VIEWS_CAP and (not post.visualizacoes or not post.thumbnail):
                         post = self._enrich_post_views(post)
+                        enriched += 1
                     posts.append(post)
                     if len(posts) >= max_posts:
                         break
@@ -548,22 +551,40 @@ class InstagramScraper:
     ) -> ProfileEngagement:
         """
         Raspa engajamento das publicações recentes do perfil.
-        1) API web_profile_info → 2) feed do usuário → 3) post configurado → 4) IA.
+        1) Feed paginado (50 posts) → 2) API web_profile_info → 3) post configurado → 4) IA.
         """
         handle = handle.lstrip("@")
         profile_url = f"https://www.instagram.com/{handle}/"
         result = ProfileEngagement(handle=handle)
 
-        posts = self.fetch_posts_api(handle, max_posts)
-        if posts:
-            result.publicacoes = posts
+        if max_posts > 12:
+            posts = self.fetch_posts_feed(handle, max_posts)
+            if posts:
+                result.publicacoes = posts
+                result.source = "feed"
+                return result
+
+        posts = self.fetch_posts_api(handle, min(max_posts, 12))
+        if posts and len(posts) >= max_posts:
+            result.publicacoes = posts[:max_posts]
             result.source = "api"
             return result
 
-        posts = self.fetch_posts_feed(handle, max_posts)
+        if len(posts) < max_posts:
+            feed_posts = self.fetch_posts_feed(handle, max_posts)
+            if feed_posts:
+                seen = {p.shortcode for p in posts}
+                for p in feed_posts:
+                    if p.shortcode not in seen:
+                        posts.append(p)
+                        seen.add(p.shortcode)
+                    if len(posts) >= max_posts:
+                        break
+
         if posts:
-            result.publicacoes = posts
-            result.source = "feed"
+            result.publicacoes = posts[:max_posts]
+            sources = {p.source for p in posts}
+            result.source = "feed" if "feed" in sources else posts[0].source
             return result
 
         seen: set[str] = set()
