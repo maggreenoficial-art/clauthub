@@ -16,6 +16,7 @@ from instagram_scraper import BROWSER_UA, InstagramScraper, REQUEST_DELAY, DEFAU
 
 ROOT = Path(__file__).resolve().parent.parent
 ENGAJAMENTO_DATA = ROOT / "data" / "engajamento.json"
+ENGAJAMENTO_CACHE_PATH = ROOT / "config" / "engajamento_cache.json"
 ENGAJAMENTO_HTML = ROOT / "engajamento" / "index.html"
 THUMBS_DIR = ROOT / "engajamento" / "thumbs"
 DEFAULT_THUMB = "/engajamento/thumbs/clauth-default.svg"
@@ -164,6 +165,389 @@ def _fmt_num(value: int) -> str:
     if value >= 10_000:
         return f"{value / 1_000:.1f}K".replace(".0K", "K")
     return f"{value:,}".replace(",", ".")
+
+
+def _parse_fmt_num(raw: str) -> int:
+    raw = (raw or "").strip().replace(".", "").replace(",", ".")
+    if not raw:
+        return 0
+    mult = 1
+    if raw.upper().endswith("K"):
+        mult = 1_000
+        raw = raw[:-1]
+    elif raw.upper().endswith("M"):
+        mult = 1_000_000
+        raw = raw[:-1]
+    try:
+        return int(float(raw) * mult)
+    except ValueError:
+        return 0
+
+
+def load_engajamento_cache() -> dict | None:
+    if not ENGAJAMENTO_CACHE_PATH.exists():
+        return None
+    try:
+        return json.loads(ENGAJAMENTO_CACHE_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def save_engajamento_cache(data: dict) -> None:
+    if (data.get("resumo") or {}).get("publicacoes_coletadas", 0) < 50:
+        return
+    payload = {
+        "updated_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
+        **{k: v for k, v in data.items() if k not in ("updated_at", "updated_at_fmt", "model")},
+    }
+    ENGAJAMENTO_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ENGAJAMENTO_CACHE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def extract_ia_context_from_html(html_content: str) -> dict:
+    """Reconstrói contexto para IA a partir do HTML publicado (quando o JSON local está desatualizado)."""
+    pub_m = re.search(r"Publicações</div><div class=\"kpi-value\">(\d+)", html_content)
+    eng_m = re.search(r"Engajamento total</div><div class=\"kpi-value\">([^<]+)", html_content)
+    views_m = re.search(r"Visualizações</div><div class=\"kpi-value\">([^<]+)", html_content)
+    likes_m = re.search(r"Curtidas</div><div class=\"kpi-value\">([^<]+)", html_content)
+    comm_m = re.search(r"Comentários</div><div class=\"kpi-value\">([^<]+)", html_content)
+    pag_m = re.search(r"Todas as páginas \((\d+)\)", html_content)
+
+    resumo = {
+        "publicacoes_coletadas": int(pub_m.group(1)) if pub_m else 0,
+        "engajamento_fmt": eng_m.group(1).strip() if eng_m else "0",
+        "visualizacoes_fmt": views_m.group(1).strip() if views_m else "0",
+        "curtidas_fmt": likes_m.group(1).strip() if likes_m else "0",
+        "comentarios_fmt": comm_m.group(1).strip() if comm_m else "0",
+        "paginas": int(pag_m.group(1)) if pag_m else 0,
+    }
+
+    pages_out: list[dict] = []
+    block_pat = re.compile(
+        r'<details class="page-block[^"]*"(?:\s+open)?>\s*<summary>\s*'
+        r'<span class="page-block-title">([^<]+)(?:<span[^>]*>.*?</span>)?\s*</span>\s*'
+        r'<span class="page-block-meta">(@[^\s·]+)\s*·\s*(\d+)/(\d+)\s*publicações\s*·\s*total\s*([^<]+)</span>',
+        re.S,
+    )
+    row_pat = re.compile(
+        r'<tr[^>]*>\s*<td>(\d+)</td>\s*'
+        r'<td><a href="([^"]+)"[^>]*class="post-shortlink">/([^<]+)</a></td>\s*'
+        r"<td>([^<]*)</td>\s*<td>([^<]*)</td>\s*<td>([^<]*)</td>\s*"
+        r"<td><strong>([^<]*)</strong></td>",
+        re.S,
+    )
+
+    for bm in block_pat.finditer(html_content):
+        nome = re.sub(r"\s+", " ", bm.group(1)).strip()
+        handle = bm.group(2).strip()
+        coletadas = int(bm.group(3))
+        max_posts = int(bm.group(4))
+        total_fmt = bm.group(5).strip()
+        start = bm.end()
+        next_block = html_content.find('<details class="page-block', start)
+        chunk = html_content[start:next_block if next_block != -1 else len(html_content)]
+        posts = []
+        for rm in row_pat.finditer(chunk):
+            posts.append({
+                "shortcode": rm.group(3).strip(),
+                "url": rm.group(2).strip(),
+                "visualizacoes": _parse_fmt_num(rm.group(4)),
+                "curtidas": _parse_fmt_num(rm.group(5)),
+                "comentarios": _parse_fmt_num(rm.group(6)),
+                "engajamento": _parse_fmt_num(rm.group(7)),
+            })
+        eng_total = _parse_fmt_num(total_fmt)
+        pages_out.append({
+            "nome": nome,
+            "handle": handle,
+            "hot": "page-block-hot" in bm.group(0),
+            "publicacoes_coletadas": coletadas,
+            "engajamento_total": eng_total,
+            "visualizacoes": sum(p["visualizacoes"] for p in posts),
+            "curtidas": sum(p["curtidas"] for p in posts),
+            "comentarios": sum(p["comentarios"] for p in posts),
+            "media_por_post": round(eng_total / coletadas) if coletadas else 0,
+            "top_posts": posts[:5],
+        })
+
+    top_global: list[dict] = []
+    card_pat = re.compile(
+        r'<article class="post-card">.*?<div class="post-page">([^<]+)</div>\s*'
+        r'<div class="post-handle">([^<]+)</div>.*?'
+        r'<strong>([^<]+)</strong> total.*?'
+        r'([^<]*) views · ([^<]*) ❤ · ([^<]*) 💬.*?'
+        r'href="([^"]+)"',
+        re.S,
+    )
+    for cm in card_pat.finditer(html_content):
+        top_global.append({
+            "pagina": cm.group(1).strip(),
+            "handle": cm.group(2).strip(),
+            "engajamento": _parse_fmt_num(cm.group(3)),
+            "visualizacoes": _parse_fmt_num(cm.group(4)),
+            "curtidas": _parse_fmt_num(cm.group(5)),
+            "comentarios": _parse_fmt_num(cm.group(6)),
+            "url": cm.group(7).strip(),
+            "shortcode": (re.search(r"/p/([^/]+)/", cm.group(7)) or [None, ""])[1],
+        })
+
+    return {
+        "resumo": resumo,
+        "max_posts_por_pagina": max_posts if pages_out else MAX_POSTS_LABEL,
+        "paginas": pages_out,
+        "top_posts_global": top_global[:12],
+    }
+
+
+def _ia_panel_css() -> str:
+    return """
+    .header-actions {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.65rem;
+    }
+    .btn-ia-analise {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 1rem; border: none; border-radius: 12px;
+      background: var(--ig-gradient); color: #fff; font-size: 0.78rem;
+      font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(220,39,67,0.35);
+    }
+    .btn-ia-analise:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-ia-analise:disabled { opacity: 0.55; cursor: wait; transform: none; }
+    .btn-ia-analise svg { width: 16px; height: 16px; fill: currentColor; }
+    .btn-ia-refresh {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.4rem 0.75rem; border-radius: 10px; border: 1px solid var(--border);
+      background: #fff; color: var(--text); font-size: 0.72rem; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+    }
+    .btn-ia-refresh:disabled { opacity: 0.5; cursor: wait; }
+    .ia-report-panel {
+      background: var(--surface); border-radius: 18px; padding: 1.15rem 1.15rem 1.25rem;
+      color: var(--text); margin-top: 0.65rem; border: 1px solid rgba(188,24,136,0.25);
+      box-shadow: 0 8px 32px rgba(188,24,136,0.12);
+    }
+    .ia-report-panel[hidden] { display: none !important; }
+    .ia-report-panel.is-loading .ia-report-body { opacity: 0.45; pointer-events: none; }
+    .ia-report-head {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+      gap: 0.5rem; margin-bottom: 0.85rem;
+    }
+    .ia-report-head p { font-size: 0.72rem; color: var(--muted); line-height: 1.45; max-width: 36rem; }
+    .ia-report-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .ia-block { margin-bottom: 1rem; }
+    .ia-block h4 {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.5rem;
+    }
+    .ia-block p { font-size: 0.8rem; line-height: 1.55; margin-bottom: 0.45rem; }
+    .ia-block-highlight {
+      padding: 0.85rem 1rem; border-radius: 14px;
+      background: linear-gradient(135deg, #fff8f0, #fff5f8); border: 1px solid #fbcfe8;
+    }
+    .ia-block-plan {
+      padding: 0.85rem 1rem; border-radius: 14px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+    }
+    .ia-block-plan h4 { color: #059669; }
+    .ia-cards { display: grid; gap: 0.65rem; }
+    @media(min-width:640px){ .ia-cards{ grid-template-columns:1fr 1fr; } }
+    .ia-card {
+      padding: 0.75rem 0.85rem; border-radius: 12px;
+      background: #fafafa; border: 1px solid var(--border); font-size: 0.78rem; line-height: 1.45;
+    }
+    .ia-card-warn { background: #fffbeb; border-color: #fde68a; }
+    .ia-card-head { display: flex; justify-content: space-between; align-items: center; gap: 0.35rem; margin-bottom: 0.2rem; }
+    .ia-handle { font-size: 0.68rem; color: var(--muted); display: block; margin-bottom: 0.35rem; }
+    .ia-status {
+      font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.12rem 0.4rem; border-radius: 20px; white-space: nowrap;
+    }
+    .ia-status-hot { background: rgba(255,107,53,0.15); color: #ff6b35; }
+    .ia-status-ok { background: #ecfdf5; color: #059669; }
+    .ia-card ul, .ia-block ul { margin: 0.35rem 0 0 1rem; font-size: 0.76rem; }
+    .ia-steps { margin: 0.35rem 0 0 1.15rem; font-size: 0.78rem; line-height: 1.55; }
+    .ia-meta { font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; }
+    .ia-empty { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+    .ia-spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(220,39,67,0.25); border-top-color: #dc2743;
+      border-radius: 50%; animation: ia-spin 0.7s linear infinite; vertical-align: middle;
+    }
+    @keyframes ia-spin { to { transform: rotate(360deg); } }"""
+
+
+def _ia_panel_script(ia_context_json: str) -> str:
+    return f"""
+  <script>
+    const IA_CONTEXT = {ia_context_json};
+
+    function esc(s) {{
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }}
+
+    function renderAnalise(a) {{
+      if (!a) return '<p class="ia-empty">Não foi possível gerar a análise. Tente novamente.</p>';
+      let h = '<h3 class="ia-report-title">' + esc(a.titulo || 'Relatório estratégico de engajamento') + '</h3>';
+      if (a.resumo_executivo) {{
+        h += '<div class="ia-block ia-block-highlight"><h4>Resumo executivo</h4>';
+        a.resumo_executivo.split('\\n\\n').filter(Boolean).forEach(p => {{ h += '<p>' + esc(p) + '</p>'; }});
+        h += '</div>';
+      }}
+      if (a.paginas_destaque && a.paginas_destaque.length) {{
+        h += '<div class="ia-block"><h4>Páginas que estão dando certo</h4><div class="ia-cards">';
+        a.paginas_destaque.forEach(item => {{
+          const st = (item.status || '').toLowerCase();
+          const cls = st.includes('alta') ? 'ia-status-hot' : 'ia-status-ok';
+          h += '<article class="ia-card"><div class="ia-card-head"><strong>' + esc(item.pagina) +
+            '</strong><span class="ia-status ' + cls + '">' + esc(item.status) + '</span></div>' +
+            '<span class="ia-handle">' + esc(item.handle) + '</span>' +
+            '<p><strong>Por que funciona:</strong> ' + esc(item.porque_funciona) + '</p>' +
+            '<p><strong>Vertente de conteúdo:</strong> ' + esc(item.vertente_conteudo) + '</p></article>';
+        }});
+        h += '</div></div>';
+      }}
+      if (a.padroes_vencedores) {{
+        h += '<div class="ia-block"><h4>Padrões dos posts vencedores</h4><p>' + esc(a.padroes_vencedores) + '</p></div>';
+      }}
+      const plano = a.plano_conteudo || {{}};
+      if (plano.vertente_principal || (plano.replicar && plano.replicar.length)) {{
+        h += '<div class="ia-block ia-block-plan"><h4>Plano de conteúdo · trilhar a vertente certa</h4>';
+        if (plano.vertente_principal) h += '<p><strong>Vertente principal:</strong> ' + esc(plano.vertente_principal) + '</p>';
+        if (plano.replicar && plano.replicar.length) {{
+          h += '<p><strong>O que replicar:</strong></p><ul>' + plano.replicar.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+        }}
+        if (plano.evitar && plano.evitar.length) {{
+          h += '<p><strong>O que evitar:</strong></p><ul>' + plano.evitar.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+        }}
+        if (plano.frequencia_sugerida) h += '<p><strong>Frequência sugerida:</strong> ' + esc(plano.frequencia_sugerida) + '</p>';
+        h += '</div>';
+      }}
+      if (a.paginas_melhorar && a.paginas_melhorar.length) {{
+        h += '<div class="ia-block"><h4>Como melhorar</h4><div class="ia-cards">';
+        a.paginas_melhorar.forEach(item => {{
+          const acoes = (item.acoes || []).map(x => '<li>' + esc(x) + '</li>').join('');
+          h += '<article class="ia-card ia-card-warn"><strong>' + esc(item.pagina) + '</strong><p>' +
+            esc(item.diagnostico) + '</p><ul>' + acoes + '</ul></article>';
+        }});
+        h += '</div></div>';
+      }}
+      if (a.proximos_passos && a.proximos_passos.length) {{
+        h += '<div class="ia-block"><h4>Próximos passos</h4><ol class="ia-steps">' +
+          a.proximos_passos.map(p => '<li>' + esc(p) + '</li>').join('') + '</ol></div>';
+      }}
+      if (a.gerado_em) h += '<p class="ia-meta">Gerado em ' + esc(a.gerado_em.slice(0, 16).replace('T', ' ')) + '</p>';
+      return h;
+    }}
+
+    async function fetchAnaliseIA() {{
+      const panel = document.getElementById('ia-report-panel');
+      const body = document.getElementById('ia-report-body');
+      const btnMain = document.getElementById('btn-ia-analise');
+      const btnRefresh = document.getElementById('btn-ia-refresh');
+      panel.hidden = false;
+      panel.classList.add('is-loading');
+      btnMain.disabled = true;
+      btnRefresh.disabled = true;
+      body.innerHTML = '<p class="ia-empty"><span class="ia-spinner"></span> A Clauth IA está analisando ' +
+        IA_CONTEXT.resumo.publicacoes_coletadas + ' publicações…</p>';
+      panel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      try {{
+        const res = await fetch('/api/analise-engajamento', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ context: IA_CONTEXT }}),
+        }});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Falha na análise');
+        body.innerHTML = renderAnalise(data.analise);
+      }} catch (err) {{
+        body.innerHTML = '<p class="ia-empty">Erro ao gerar análise: ' + esc(err.message) +
+          '. Verifique se OPENROUTER_API_KEY está configurada na Vercel.</p>';
+      }} finally {{
+        panel.classList.remove('is-loading');
+        btnMain.disabled = false;
+        btnRefresh.disabled = false;
+      }}
+    }}
+
+    function openAnalisePanel() {{
+      const panel = document.getElementById('ia-report-panel');
+      const body = document.getElementById('ia-report-body');
+      panel.hidden = false;
+      panel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      if (body.querySelector('.ia-report-title')) return;
+      fetchAnaliseIA();
+    }}
+
+    document.getElementById('btn-ia-analise').addEventListener('click', openAnalisePanel);
+    document.getElementById('btn-ia-refresh').addEventListener('click', fetchAnaliseIA);
+  </script>"""
+
+
+def inject_ia_into_html(html_content: str, ia_context: dict, analise: dict | None) -> str:
+    """Insere botão e painel de análise IA em um HTML de engajamento existente."""
+    if "btn-ia-analise" in html_content:
+        html_content = re.sub(
+            r'<script>\s*const IA_CONTEXT = [\s\S]*?</script>\s*(?=</body>)',
+            "",
+            html_content,
+        )
+        html_content = re.sub(
+            r'<div class="ia-report-panel"[\s\S]*?</div>\s*(?=<p class="section-title">Resumo geral)',
+            "",
+            html_content,
+        )
+        html_content = re.sub(
+            r'<div class="header-actions">[\s\S]*?</div>\s*<a class="back-link"',
+            '<a class="back-link"',
+            html_content,
+        )
+        html_content = re.sub(r"\.header-actions[\s\S]*?@keyframes ia-spin[\s\S]*?\}", "", html_content)
+
+    css = _ia_panel_css()
+    if ".btn-ia-analise" not in html_content:
+        html_content = html_content.replace("</style>", css + "\n  </style>", 1)
+
+    header_actions = """
+    <div class="header-actions">
+      <div class="update-pill">""" + (
+        re.search(r'<div class="update-pill">([^<]+)</div>', html_content).group(1)
+        if re.search(r'<div class="update-pill">([^<]+)</div>', html_content)
+        else ""
+    ) + """</div>
+      <button type="button" class="btn-ia-analise" id="btn-ia-analise" aria-controls="ia-report-panel">
+        <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H9a2 2 0 01-2-2v-1H6a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5z"/></svg>
+        Gerar análise com IA
+      </button>
+    </div>"""
+
+    html_content = re.sub(
+        r'<div class="update-pill">[^<]+</div>\s*<a class="back-link"',
+        header_actions + '\n    <a class="back-link"',
+        html_content,
+        count=1,
+    )
+
+    panel = f"""
+    <div class="ia-report-panel" hidden id="ia-report-panel">
+      <div class="ia-report-head">
+        <p>A Clauth IA analisa as últimas publicações, identifica o que está funcionando e sugere como trilhar a mesma vertente de conteúdo.</p>
+        <button type="button" class="btn-ia-refresh" id="btn-ia-refresh">↻ Atualizar análise</button>
+      </div>
+      <div class="ia-report-body" id="ia-report-body">{_render_analise_ia_body(analise)}</div>
+    </div>"""
+
+    html_content = html_content.replace(
+        '  <main>\n    <p class="section-title">Resumo geral</p>',
+        f"  <main>{panel}\n    <p class=\"section-title\">Resumo geral</p>",
+        1,
+    )
+
+    script = _ia_panel_script(json.dumps(ia_context, ensure_ascii=False))
+    return html_content.replace("</body>", script + "\n</body>", 1)
 
 
 def _parse_ia_json(content: str) -> dict:
@@ -484,6 +868,21 @@ def compute_engajamento(
         "top_posts": top_posts,
         "max_engajamento": max_eng or 1,
     }
+
+
+def _prefer_engajamento_cache(data: dict) -> dict:
+    """Usa cache quando a coleta atual falhou parcialmente."""
+    cached = load_engajamento_cache()
+    if not cached:
+        return data
+    cur = (data.get("resumo") or {}).get("publicacoes_coletadas", 0)
+    prev = (cached.get("resumo") or {}).get("publicacoes_coletadas", 0)
+    if prev > cur:
+        print(f"  [cache] Engajamento: usando cache ({prev} pub.) em vez de {cur}", file=sys.stderr)
+        merged = dict(cached)
+        merged["max_posts_por_pagina"] = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
+        return merged
+    return data
 
 
 def _posts_with_fmt(posts: list[dict]) -> list[dict]:
@@ -1045,6 +1444,8 @@ def update_and_save(
     updated_at: str,
 ) -> dict:
     data = compute_engajamento(pages, all_metrics, api_key, model)
+    data = _prefer_engajamento_cache(data)
+    save_engajamento_cache(data)
 
     if api_key:
         print("Gerando análise estratégica Clauth IA...")

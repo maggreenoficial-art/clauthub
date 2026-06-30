@@ -1,0 +1,702 @@
+{
+  "updated_at": "now",
+  "titulo": "Engajamento Instagram",
+  "max_posts_por_pagina": 50,
+  "resumo": {
+    "publicacoes_coletadas": 474,
+    "engajamento_fmt": "2.5M",
+    "visualizacoes_fmt": "2.4M",
+    "curtidas_fmt": "166.4K",
+    "comentarios_fmt": "1.767",
+    "paginas": 14,
+    "engajamento_total": 0,
+    "visualizacoes_total": 0,
+    "curtidas_total": 0,
+    "comentarios_total": 0
+  },
+  "paginas": [
+    {
+      "nome": "Tá Rolando nos Lagos",
+      "handle": "@tarolandonoslagos",
+      "hot": true,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 11000000,
+      "visualizacoes": 9732764,
+      "curtidas": 949109,
+      "comentarios": 563,
+      "visualizacoes_fmt": "9732764",
+      "curtidas_fmt": "949109",
+      "comentarios_fmt": "563",
+      "engajamento_fmt": "11000000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DXRlX12l5xk/",
+          "shortcode": "DXRlX12l5xk",
+          "visualizacoes": 9676000,
+          "curtidas": 948000,
+          "comentarios": 528,
+          "engajamento_total": 11000000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLswVzACI-/",
+          "shortcode": "DaLswVzACI-",
+          "visualizacoes": 7606,
+          "curtidas": 570,
+          "comentarios": 4,
+          "engajamento_total": 8180
+        },
+        {
+          "url": "https://www.instagram.com/p/DaGlJ7CkykF/",
+          "shortcode": "DaGlJ7CkykF",
+          "visualizacoes": 3116,
+          "curtidas": 36,
+          "comentarios": 3,
+          "engajamento_total": 3155
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ-lkKyFDJS/",
+          "shortcode": "DZ-lkKyFDJS",
+          "visualizacoes": 3005,
+          "curtidas": 19,
+          "comentarios": 0,
+          "engajamento_total": 3024
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ98aTgiAcX/",
+          "shortcode": "DZ98aTgiAcX",
+          "visualizacoes": 2738,
+          "curtidas": 37,
+          "comentarios": 3,
+          "engajamento_total": 2778
+        }
+      ]
+    },
+    {
+      "nome": "Pulso da Serra",
+      "handle": "@pulsodaserra",
+      "hot": true,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 7786000,
+      "visualizacoes": 6629306,
+      "curtidas": 550311,
+      "comentarios": 635,
+      "visualizacoes_fmt": "6629306",
+      "curtidas_fmt": "550311",
+      "comentarios_fmt": "635",
+      "engajamento_fmt": "7786000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DXPJQUeAvTA/",
+          "shortcode": "DXPJQUeAvTA",
+          "visualizacoes": 5431000,
+          "curtidas": 544000,
+          "comentarios": 522,
+          "engajamento_total": 5981000
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ9_CPeEUKC/",
+          "shortcode": "DZ9_CPeEUKC",
+          "visualizacoes": 1138000,
+          "curtidas": 5357,
+          "comentarios": 61,
+          "engajamento_total": 1192000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaJDBXoAGsz/",
+          "shortcode": "DaJDBXoAGsz",
+          "visualizacoes": 5883,
+          "curtidas": 40,
+          "comentarios": 0,
+          "engajamento_total": 5923
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLs5OGDUhb/",
+          "shortcode": "DaLs5OGDUhb",
+          "visualizacoes": 5418,
+          "curtidas": 284,
+          "comentarios": 0,
+          "engajamento_total": 5702
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ8UDLJgCN5/",
+          "shortcode": "DZ8UDLJgCN5",
+          "visualizacoes": 4730,
+          "curtidas": 61,
+          "comentarios": 13,
+          "engajamento_total": 4804
+        }
+      ]
+    },
+    {
+      "nome": "Segurança em Pauta RJ",
+      "handle": "@segurancaempautarj",
+      "hot": true,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 1243000,
+      "visualizacoes": 271566,
+      "curtidas": 2065,
+      "comentarios": 73,
+      "visualizacoes_fmt": "271566",
+      "curtidas_fmt": "2065",
+      "comentarios_fmt": "73",
+      "engajamento_fmt": "1243000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DZ4nSFpRrdf/",
+          "shortcode": "DZ4nSFpRrdf",
+          "visualizacoes": 27000,
+          "curtidas": 572,
+          "comentarios": 42,
+          "engajamento_total": 276000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaIx146RBIK/",
+          "shortcode": "DaIx146RBIK",
+          "visualizacoes": 166000,
+          "curtidas": 391,
+          "comentarios": 5,
+          "engajamento_total": 17000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBlwjxhi-g/",
+          "shortcode": "DaBlwjxhi-g",
+          "visualizacoes": 9814,
+          "curtidas": 71,
+          "comentarios": 6,
+          "engajamento_total": 9891
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ-hbU7RiVr/",
+          "shortcode": "DZ-hbU7RiVr",
+          "visualizacoes": 6552,
+          "curtidas": 110,
+          "comentarios": 0,
+          "engajamento_total": 6662
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ8jEnph9BA/",
+          "shortcode": "DZ8jEnph9BA",
+          "visualizacoes": 3943,
+          "curtidas": 67,
+          "comentarios": 0,
+          "engajamento_total": 4010
+        }
+      ]
+    },
+    {
+      "nome": "Na Pauta RJ",
+      "handle": "@napautarj",
+      "hot": true,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 1027000,
+      "visualizacoes": 394857,
+      "curtidas": 1120,
+      "comentarios": 106,
+      "visualizacoes_fmt": "394857",
+      "curtidas_fmt": "1120",
+      "comentarios_fmt": "106",
+      "engajamento_fmt": "1027000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaLTMRMAgKQ/",
+          "shortcode": "DaLTMRMAgKQ",
+          "visualizacoes": 207000,
+          "curtidas": 75,
+          "comentarios": 10,
+          "engajamento_total": 208000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+          "shortcode": "DaBUo1mhejr",
+          "visualizacoes": 119000,
+          "curtidas": 72,
+          "comentarios": 10,
+          "engajamento_total": 12000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBRPtxl-Nc/",
+          "shortcode": "DaBRPtxl-Nc",
+          "visualizacoes": 6091,
+          "curtidas": 63,
+          "comentarios": 8,
+          "engajamento_total": 6162
+        },
+        {
+          "url": "https://www.instagram.com/p/DaI_mFbAcxv/",
+          "shortcode": "DaI_mFbAcxv",
+          "visualizacoes": 5910,
+          "curtidas": 35,
+          "comentarios": 0,
+          "engajamento_total": 5945
+        },
+        {
+          "url": "https://www.instagram.com/p/DaMF7BwtcbF/",
+          "shortcode": "DaMF7BwtcbF",
+          "visualizacoes": 4797,
+          "curtidas": 113,
+          "comentarios": 6,
+          "engajamento_total": 4916
+        }
+      ]
+    },
+    {
+      "nome": "Jacarepaguá Agora RJ",
+      "handle": "@jacarepagua_agora",
+      "hot": false,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 922000,
+      "visualizacoes": 197845,
+      "curtidas": 1333,
+      "comentarios": 108,
+      "visualizacoes_fmt": "197845",
+      "curtidas_fmt": "1333",
+      "comentarios_fmt": "108",
+      "engajamento_fmt": "922000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+          "shortcode": "DaBUo1mhejr",
+          "visualizacoes": 119000,
+          "curtidas": 72,
+          "comentarios": 10,
+          "engajamento_total": 12000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaAduB6D0Fn/",
+          "shortcode": "DaAduB6D0Fn",
+          "visualizacoes": 7471,
+          "curtidas": 152,
+          "comentarios": 44,
+          "engajamento_total": 7667
+        },
+        {
+          "url": "https://www.instagram.com/p/DaI_mZXiLG7/",
+          "shortcode": "DaI_mZXiLG7",
+          "visualizacoes": 6169,
+          "curtidas": 61,
+          "comentarios": 1,
+          "engajamento_total": 6231
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBROsAERFm/",
+          "shortcode": "DaBROsAERFm",
+          "visualizacoes": 3870,
+          "curtidas": 50,
+          "comentarios": 2,
+          "engajamento_total": 3922
+        },
+        {
+          "url": "https://www.instagram.com/p/DaDRXWYAaDw/",
+          "shortcode": "DaDRXWYAaDw",
+          "visualizacoes": 3527,
+          "curtidas": 28,
+          "comentarios": 1,
+          "engajamento_total": 3556
+        }
+      ]
+    },
+    {
+      "nome": "Giro Baixada RJ",
+      "handle": "@girobaixadarj",
+      "hot": false,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 818000,
+      "visualizacoes": 321886,
+      "curtidas": 1010,
+      "comentarios": 111,
+      "visualizacoes_fmt": "321886",
+      "curtidas_fmt": "1010",
+      "comentarios_fmt": "111",
+      "engajamento_fmt": "818000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaLFh7ijYvQ/",
+          "shortcode": "DaLFh7ijYvQ",
+          "visualizacoes": 268000,
+          "curtidas": 107,
+          "comentarios": 75,
+          "engajamento_total": 27000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaDz2A5xaCD/",
+          "shortcode": "DaDz2A5xaCD",
+          "visualizacoes": 5413,
+          "curtidas": 39,
+          "comentarios": 8,
+          "engajamento_total": 5460
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBG8zAuAOZ/",
+          "shortcode": "DaBG8zAuAOZ",
+          "visualizacoes": 4022,
+          "curtidas": 59,
+          "comentarios": 4,
+          "engajamento_total": 4085
+        },
+        {
+          "url": "https://www.instagram.com/p/DaEKkdTjIMC/",
+          "shortcode": "DaEKkdTjIMC",
+          "visualizacoes": 3251,
+          "curtidas": 36,
+          "comentarios": 1,
+          "engajamento_total": 3288
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLMXGWAexC/",
+          "shortcode": "DaLMXGWAexC",
+          "visualizacoes": 3005,
+          "curtidas": 66,
+          "comentarios": 0,
+          "engajamento_total": 3071
+        }
+      ]
+    },
+    {
+      "nome": "Alerta Rio 360",
+      "handle": "@alertario360",
+      "hot": false,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 80000,
+      "visualizacoes": 185674,
+      "curtidas": 1363,
+      "comentarios": 60,
+      "visualizacoes_fmt": "185674",
+      "curtidas_fmt": "1363",
+      "comentarios_fmt": "60",
+      "engajamento_fmt": "80000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+          "shortcode": "DaBUo1mhejr",
+          "visualizacoes": 119000,
+          "curtidas": 72,
+          "comentarios": 10,
+          "engajamento_total": 12000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaBPhPRiZRW/",
+          "shortcode": "DaBPhPRiZRW",
+          "visualizacoes": 9316,
+          "curtidas": 59,
+          "comentarios": 0,
+          "engajamento_total": 9375
+        },
+        {
+          "url": "https://www.instagram.com/p/DaD2C-_D2vs/",
+          "shortcode": "DaD2C-_D2vs",
+          "visualizacoes": 6096,
+          "curtidas": 354,
+          "comentarios": 13,
+          "engajamento_total": 6463
+        },
+        {
+          "url": "https://www.instagram.com/p/DaERh6OAL8H/",
+          "shortcode": "DaERh6OAL8H",
+          "visualizacoes": 4015,
+          "curtidas": 54,
+          "comentarios": 12,
+          "engajamento_total": 4081
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLCIITFCLi/",
+          "shortcode": "DaLCIITFCLi",
+          "visualizacoes": 3425,
+          "curtidas": 19,
+          "comentarios": 13,
+          "engajamento_total": 3457
+        }
+      ]
+    },
+    {
+      "nome": "Radar Campos",
+      "handle": "@radarcampos",
+      "hot": true,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 727000,
+      "visualizacoes": 429785,
+      "curtidas": 1131,
+      "comentarios": 49,
+      "visualizacoes_fmt": "429785",
+      "curtidas_fmt": "1131",
+      "comentarios_fmt": "49",
+      "engajamento_fmt": "727000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DZ-NzHmCrZJ/",
+          "shortcode": "DZ-NzHmCrZJ",
+          "visualizacoes": 236000,
+          "curtidas": 685,
+          "comentarios": 6,
+          "engajamento_total": 243000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaK9-uNAQSE/",
+          "shortcode": "DaK9-uNAQSE",
+          "visualizacoes": 162000,
+          "curtidas": 84,
+          "comentarios": 3,
+          "engajamento_total": 163000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLNebIAl6_/",
+          "shortcode": "DaLNebIAl6_",
+          "visualizacoes": 8987,
+          "curtidas": 27,
+          "comentarios": 35,
+          "engajamento_total": 9049
+        },
+        {
+          "url": "https://www.instagram.com/p/DaJGg2Cjv2T/",
+          "shortcode": "DaJGg2Cjv2T",
+          "visualizacoes": 2650,
+          "curtidas": 25,
+          "comentarios": 0,
+          "engajamento_total": 2675
+        },
+        {
+          "url": "https://www.instagram.com/p/DaIrAVRDNAl/",
+          "shortcode": "DaIrAVRDNAl",
+          "visualizacoes": 2510,
+          "curtidas": 36,
+          "comentarios": 1,
+          "engajamento_total": 2547
+        }
+      ]
+    },
+    {
+      "nome": "Fala Zona Oeste RJ",
+      "handle": "@falazoeste",
+      "hot": false,
+      "publicacoes_coletadas": 50,
+      "engajamento_total": 653000,
+      "visualizacoes": 171057,
+      "curtidas": 1223,
+      "comentarios": 50,
+      "visualizacoes_fmt": "171057",
+      "curtidas_fmt": "1223",
+      "comentarios_fmt": "50",
+      "engajamento_fmt": "653000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+          "shortcode": "DaBUo1mhejr",
+          "visualizacoes": 119000,
+          "curtidas": 72,
+          "comentarios": 10,
+          "engajamento_total": 12000
+        },
+        {
+          "url": "https://www.instagram.com/p/DaC_I-hkR4I/",
+          "shortcode": "DaC_I-hkR4I",
+          "visualizacoes": 6248,
+          "curtidas": 158,
+          "comentarios": 9,
+          "engajamento_total": 6415
+        },
+        {
+          "url": "https://www.instagram.com/p/DaLCGAdkyyC/",
+          "shortcode": "DaLCGAdkyyC",
+          "visualizacoes": 3291,
+          "curtidas": 17,
+          "comentarios": 7,
+          "engajamento_total": 3315
+        },
+        {
+          "url": "https://www.instagram.com/p/DZ_H2eCiWMm/",
+          "shortcode": "DZ_H2eCiWMm",
+          "visualizacoes": 3045,
+          "curtidas": 102,
+          "comentarios": 3,
+          "engajamento_total": 3150
+        },
+        {
+          "url": "https://www.instagram.com/p/DaKzxIhO8_7/",
+          "shortcode": "DaKzxIhO8_7",
+          "visualizacoes": 2904,
+          "curtidas": 150,
+          "comentarios": 0,
+          "engajamento_total": 3054
+        }
+      ]
+    },
+    {
+      "nome": "Radar Nova Iguaçu",
+      "handle": "@radarnovaiguacu",
+      "hot": true,
+      "publicacoes_coletadas": 24,
+      "engajamento_total": 217000,
+      "visualizacoes": 21151,
+      "curtidas": 566,
+      "comentarios": 12,
+      "visualizacoes_fmt": "21151",
+      "curtidas_fmt": "566",
+      "comentarios_fmt": "12",
+      "engajamento_fmt": "217000",
+      "posts": [
+        {
+          "url": "https://www.instagram.com/p/DaLCD0jkUtw/",
+          "shortcode": "DaLCD0jkUtw",
+          "visualizacoes": 3496,
+          "curtidas": 21,
+          "comentarios": 8,
+          "engajamento_total": 3525
+        },
+        {
+          "url": "https://www.instagram.com/p/DaIzj1ED0Ms/",
+          "shortcode": "DaIzj1ED0Ms",
+          "visualizacoes": 2548,
+          "curtidas": 34,
+          "comentarios": 0,
+          "engajamento_total": 2582
+        },
+        {
+          "url": "https://www.instagram.com/p/DaL_55ugCww/",
+          "shortcode": "DaL_55ugCww",
+          "visualizacoes": 2007,
+          "curtidas": 97,
+          "comentarios": 0,
+          "engajamento_total": 2104
+        },
+        {
+          "url": "https://www.instagram.com/p/DaG2UujjX7f/",
+          "shortcode": "DaG2UujjX7f",
+          "visualizacoes": 1816,
+          "curtidas": 140,
+          "comentarios": 1,
+          "engajamento_total": 1957
+        },
+        {
+          "url": "https://www.instagram.com/p/DaGUAFUiRv4/",
+          "shortcode": "DaGUAFUiRv4",
+          "visualizacoes": 1620,
+          "curtidas": 47,
+          "comentarios": 0,
+          "engajamento_total": 1667
+        }
+      ]
+    }
+  ],
+  "top_posts": [
+    {
+      "pagina": "Tá Rolando nos Lagos",
+      "handle": "@tarolandonoslagos",
+      "engajamento": 11000000,
+      "visualizacoes": 0,
+      "curtidas": 948000,
+      "comentarios": 528,
+      "url": "https://www.instagram.com/p/DXRlX12l5xk/",
+      "shortcode": "DXRlX12l5xk"
+    },
+    {
+      "pagina": "Pulso da Serra",
+      "handle": "@pulsodaserra",
+      "engajamento": 5981000,
+      "visualizacoes": 0,
+      "curtidas": 544000,
+      "comentarios": 522,
+      "url": "https://www.instagram.com/p/DXPJQUeAvTA/",
+      "shortcode": "DXPJQUeAvTA"
+    },
+    {
+      "pagina": "Pulso da Serra",
+      "handle": "@pulsodaserra",
+      "engajamento": 1192000,
+      "visualizacoes": 0,
+      "curtidas": 5357,
+      "comentarios": 61,
+      "url": "https://www.instagram.com/p/DZ9_CPeEUKC/",
+      "shortcode": "DZ9_CPeEUKC"
+    },
+    {
+      "pagina": "Segurança em Pauta RJ",
+      "handle": "@segurancaempautarj",
+      "engajamento": 276000,
+      "visualizacoes": 0,
+      "curtidas": 572,
+      "comentarios": 42,
+      "url": "https://www.instagram.com/p/DZ4nSFpRrdf/",
+      "shortcode": "DZ4nSFpRrdf"
+    },
+    {
+      "pagina": "Giro Baixada RJ",
+      "handle": "@girobaixadarj",
+      "engajamento": 27000,
+      "visualizacoes": 0,
+      "curtidas": 107,
+      "comentarios": 75,
+      "url": "https://www.instagram.com/p/DaLFh7ijYvQ/",
+      "shortcode": "DaLFh7ijYvQ"
+    },
+    {
+      "pagina": "Radar Campos",
+      "handle": "@radarcampos",
+      "engajamento": 243000,
+      "visualizacoes": 0,
+      "curtidas": 685,
+      "comentarios": 6,
+      "url": "https://www.instagram.com/p/DZ-NzHmCrZJ/",
+      "shortcode": "DZ-NzHmCrZJ"
+    },
+    {
+      "pagina": "Na Pauta RJ",
+      "handle": "@napautarj",
+      "engajamento": 208000,
+      "visualizacoes": 0,
+      "curtidas": 75,
+      "comentarios": 10,
+      "url": "https://www.instagram.com/p/DaLTMRMAgKQ/",
+      "shortcode": "DaLTMRMAgKQ"
+    },
+    {
+      "pagina": "Segurança em Pauta RJ",
+      "handle": "@segurancaempautarj",
+      "engajamento": 17000,
+      "visualizacoes": 0,
+      "curtidas": 391,
+      "comentarios": 5,
+      "url": "https://www.instagram.com/p/DaIx146RBIK/",
+      "shortcode": "DaIx146RBIK"
+    },
+    {
+      "pagina": "Radar Campos",
+      "handle": "@radarcampos",
+      "engajamento": 163000,
+      "visualizacoes": 0,
+      "curtidas": 84,
+      "comentarios": 3,
+      "url": "https://www.instagram.com/p/DaK9-uNAQSE/",
+      "shortcode": "DaK9-uNAQSE"
+    },
+    {
+      "pagina": "Na Pauta RJ",
+      "handle": "@napautarj",
+      "engajamento": 12000,
+      "visualizacoes": 0,
+      "curtidas": 72,
+      "comentarios": 10,
+      "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+      "shortcode": "DaBUo1mhejr"
+    },
+    {
+      "pagina": "Jacarepaguá Agora RJ",
+      "handle": "@jacarepagua_agora",
+      "engajamento": 12000,
+      "visualizacoes": 0,
+      "curtidas": 72,
+      "comentarios": 10,
+      "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+      "shortcode": "DaBUo1mhejr"
+    },
+    {
+      "pagina": "Alerta Rio 360",
+      "handle": "@alertario360",
+      "engajamento": 12000,
+      "visualizacoes": 0,
+      "curtidas": 72,
+      "comentarios": 10,
+      "url": "https://www.instagram.com/p/DaBUo1mhejr/",
+      "shortcode": "DaBUo1mhejr"
+    }
+  ],
+  "max_engajamento": 1
+}
