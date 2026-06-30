@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -11,7 +12,7 @@ from pathlib import Path
 import requests
 
 from relatorio_financeiro import collection_label
-from instagram_scraper import BROWSER_UA, InstagramScraper, REQUEST_DELAY, DEFAULT_MAX_POSTS
+from instagram_scraper import BROWSER_UA, InstagramScraper, REQUEST_DELAY, DEFAULT_MAX_POSTS, OPENROUTER_URL
 
 ROOT = Path(__file__).resolve().parent.parent
 ENGAJAMENTO_DATA = ROOT / "data" / "engajamento.json"
@@ -163,6 +164,214 @@ def _fmt_num(value: int) -> str:
     if value >= 10_000:
         return f"{value / 1_000:.1f}K".replace(".0K", "K")
     return f"{value:,}".replace(",", ".")
+
+
+def _parse_ia_json(content: str) -> dict:
+    content = (content or "").strip()
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\s*", "", content)
+        content = re.sub(r"\s*```$", "", content)
+    return json.loads(content)
+
+
+def _build_ia_context(data: dict) -> dict:
+    """Resumo compacto dos dados para prompt da IA (sem inflar o token)."""
+    pages_out = []
+    for p in data.get("paginas") or []:
+        posts = sorted(
+            p.get("posts") or [],
+            key=lambda x: x.get("engajamento_total") or _post_engagement(x),
+            reverse=True,
+        )[:5]
+        pages_out.append({
+            "nome": p["nome"],
+            "handle": p["handle"],
+            "hot": bool(p.get("hot")),
+            "momentum": p.get("momentum_fmt") or "",
+            "publicacoes_coletadas": p.get("publicacoes_coletadas", 0),
+            "engajamento_total": p.get("engajamento_total", 0),
+            "visualizacoes": p.get("visualizacoes", 0),
+            "curtidas": p.get("curtidas", 0),
+            "comentarios": p.get("comentarios", 0),
+            "media_por_post": round(
+                p["engajamento_total"] / p["publicacoes_coletadas"]
+                if p.get("publicacoes_coletadas")
+                else 0
+            ),
+            "top_posts": [
+                {
+                    "shortcode": t.get("shortcode"),
+                    "url": t.get("url"),
+                    "visualizacoes": t.get("visualizacoes", 0),
+                    "curtidas": t.get("curtidas", 0),
+                    "comentarios": t.get("comentarios", 0),
+                    "engajamento": t.get("engajamento_total") or _post_engagement(t),
+                }
+                for t in posts
+            ],
+        })
+    top_global = []
+    for t in (data.get("top_posts") or [])[:12]:
+        top_global.append({
+            "pagina": t.get("pagina"),
+            "handle": t.get("handle"),
+            "shortcode": t.get("shortcode"),
+            "url": t.get("url"),
+            "engajamento": t.get("engajamento_total", 0),
+            "visualizacoes": t.get("visualizacoes", 0),
+            "curtidas": t.get("curtidas", 0),
+            "comentarios": t.get("comentarios", 0),
+        })
+    return {
+        "resumo": data.get("resumo", {}),
+        "max_posts_por_pagina": data.get("max_posts_por_pagina", MAX_POSTS_LABEL),
+        "paginas": pages_out,
+        "top_posts_global": top_global,
+    }
+
+
+IA_ANALISE_SCHEMA = """{
+  "titulo": "Relatório estratégico de engajamento",
+  "resumo_executivo": "2-4 parágrafos em linguagem clara para a cliente",
+  "paginas_destaque": [
+    {"pagina": "nome", "handle": "@...", "status": "em alta|estável|precisa atenção", "porque_funciona": "...", "vertente_conteudo": "..."}
+  ],
+  "padroes_vencedores": "O que os posts de maior engajamento têm em comum",
+  "paginas_melhorar": [
+    {"pagina": "nome", "diagnostico": "...", "acoes": ["ação 1", "ação 2"]}
+  ],
+  "plano_conteudo": {
+    "vertente_principal": "linha editorial que está performando",
+    "replicar": ["recomendação 1", "recomendação 2"],
+    "evitar": ["o que não está funcionando"],
+    "frequencia_sugerida": "sugestão prática"
+  },
+  "proximos_passos": ["passo 1", "passo 2", "passo 3"]
+}"""
+
+
+def generate_ia_analise(context: dict, api_key: str, model: str) -> dict | None:
+    """Gera relatório estratégico via OpenRouter a partir das métricas coletadas."""
+    prompt = (
+        "Você é analista de conteúdo Instagram para uma rede de páginas de notícias regionais do Rio de Janeiro.\n"
+        "Analise os dados de engajamento (últimas publicações por perfil) e produza um relatório estratégico para a cliente.\n"
+        "Explique: quais páginas dão certo, POR QUE dão certo, como melhorar as que estão fracas, "
+        "e como trilhar novos posts na mesma vertente do que performa.\n"
+        "Cite páginas, handles e números reais dos dados. Tom profissional e acessível. Português do Brasil.\n\n"
+        f"DADOS:\n{json.dumps(context, ensure_ascii=False, indent=2)}\n\n"
+        f"Retorne APENAS JSON válido com esta estrutura:\n{IA_ANALISE_SCHEMA}"
+    )
+    try:
+        r = requests.post(
+            OPENROUTER_URL,
+            headers={
+                "Authorization": f"Bearer {api_key.strip()}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://clauthub.digital",
+                "X-Title": "Clauth Hub Engajamento",
+            },
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "response_format": {"type": "json_object"},
+            },
+            timeout=180,
+        )
+        r.raise_for_status()
+        content = r.json()["choices"][0]["message"].get("content") or ""
+        analise = _parse_ia_json(content)
+        analise["gerado_em"] = datetime.now(timezone(timedelta(hours=-3))).isoformat()
+        analise["modelo"] = model
+        return analise
+    except (requests.RequestException, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"  [aviso] Análise IA engajamento: {exc}", file=sys.stderr)
+        return None
+
+
+def _render_analise_ia_body(analise: dict | None) -> str:
+    if not analise:
+        return (
+            '<p class="ia-empty">A análise estratégica ainda não foi gerada. '
+            'Clique em <strong>Gerar análise com IA</strong> para criar o relatório com os dados atuais.</p>'
+        )
+
+    parts: list[str] = []
+    titulo = html.escape(analise.get("titulo") or "Relatório estratégico de engajamento")
+    parts.append(f'<h3 class="ia-report-title">{titulo}</h3>')
+
+    resumo = analise.get("resumo_executivo") or ""
+    if resumo:
+        paras = [p.strip() for p in resumo.split("\n\n") if p.strip()]
+        parts.append('<div class="ia-block ia-block-highlight">')
+        parts.append('<h4>Resumo executivo</h4>')
+        for p in paras:
+            parts.append(f"<p>{html.escape(p)}</p>")
+        parts.append("</div>")
+
+    destaque = analise.get("paginas_destaque") or []
+    if destaque:
+        parts.append('<div class="ia-block"><h4>Páginas que estão dando certo</h4><div class="ia-cards">')
+        for item in destaque:
+            status = html.escape(item.get("status") or "")
+            status_cls = "ia-status-hot" if "alta" in status.lower() else "ia-status-ok"
+            parts.append(f"""
+            <article class="ia-card">
+              <div class="ia-card-head">
+                <strong>{html.escape(item.get("pagina") or "")}</strong>
+                <span class="ia-status {status_cls}">{status}</span>
+              </div>
+              <span class="ia-handle">{html.escape(item.get("handle") or "")}</span>
+              <p><strong>Por que funciona:</strong> {html.escape(item.get("porque_funciona") or "")}</p>
+              <p><strong>Vertente de conteúdo:</strong> {html.escape(item.get("vertente_conteudo") or "")}</p>
+            </article>""")
+        parts.append("</div></div>")
+
+    padroes = analise.get("padroes_vencedores") or ""
+    if padroes:
+        parts.append(
+            f'<div class="ia-block"><h4>Padrões dos posts vencedores</h4><p>{html.escape(padroes)}</p></div>'
+        )
+
+    plano = analise.get("plano_conteudo") or {}
+    if plano:
+        parts.append('<div class="ia-block ia-block-plan"><h4>Plano de conteúdo · trilhar a vertente certa</h4>')
+        if plano.get("vertente_principal"):
+            parts.append(f'<p><strong>Vertente principal:</strong> {html.escape(plano["vertente_principal"])}</p>')
+        if plano.get("replicar"):
+            parts.append("<p><strong>O que replicar:</strong></p><ul>")
+            parts.extend(f"<li>{html.escape(x)}</li>" for x in plano["replicar"])
+            parts.append("</ul>")
+        if plano.get("evitar"):
+            parts.append("<p><strong>O que evitar:</strong></p><ul>")
+            parts.extend(f"<li>{html.escape(x)}</li>" for x in plano["evitar"])
+            parts.append("</ul>")
+        if plano.get("frequencia_sugerida"):
+            parts.append(f'<p><strong>Frequência sugerida:</strong> {html.escape(plano["frequencia_sugerida"])}</p>')
+        parts.append("</div>")
+
+    melhorar = analise.get("paginas_melhorar") or []
+    if melhorar:
+        parts.append('<div class="ia-block"><h4>Como melhorar</h4><div class="ia-cards">')
+        for item in melhorar:
+            acoes = "".join(f"<li>{html.escape(a)}</li>" for a in (item.get("acoes") or []))
+            parts.append(f"""
+            <article class="ia-card ia-card-warn">
+              <strong>{html.escape(item.get("pagina") or "")}</strong>
+              <p>{html.escape(item.get("diagnostico") or "")}</p>
+              <ul>{acoes}</ul>
+            </article>""")
+        parts.append("</div></div>")
+
+    passos = analise.get("proximos_passos") or []
+    if passos:
+        parts.append('<div class="ia-block"><h4>Próximos passos</h4><ol class="ia-steps">')
+        parts.extend(f"<li>{html.escape(p)}</li>" for p in passos)
+        parts.append("</ol></div>")
+
+    if analise.get("gerado_em"):
+        parts.append(f'<p class="ia-meta">Gerado em {html.escape(analise["gerado_em"][:16].replace("T", " "))}</p>')
+
+    return "".join(parts)
 
 
 def collect_page_engagement(
@@ -418,6 +627,11 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     else:
         top_posts_html = '<p class="empty-note">Nenhuma publicação com engajamento registrado.</p>'
 
+    analise = data.get("analise_ia")
+    ia_context_json = json.dumps(_build_ia_context(data), ensure_ascii=False)
+    ia_body_html = _render_analise_ia_body(analise)
+    panel_hidden = " hidden"
+
     r = data["resumo"]
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -467,6 +681,80 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       font-size: 0.76rem; line-height: 1.55; color: rgba(255,255,255,0.65);
     }}
     .info-banner strong {{ color: rgba(255,255,255,0.9); }}
+    .header-actions {{
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.65rem;
+    }}
+    .btn-ia-analise {{
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 1rem; border: none; border-radius: 12px;
+      background: var(--ig-gradient); color: #fff; font-size: 0.78rem;
+      font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(220,39,67,0.35);
+    }}
+    .btn-ia-analise:hover {{ opacity: 0.92; transform: translateY(-1px); }}
+    .btn-ia-analise:disabled {{ opacity: 0.55; cursor: wait; transform: none; }}
+    .btn-ia-analise svg {{ width: 16px; height: 16px; fill: currentColor; }}
+    .btn-ia-refresh {{
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.4rem 0.75rem; border-radius: 10px; border: 1px solid var(--border);
+      background: #fff; color: var(--text); font-size: 0.72rem; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+    }}
+    .btn-ia-refresh:disabled {{ opacity: 0.5; cursor: wait; }}
+    .ia-report-panel {{
+      background: var(--surface); border-radius: 18px; padding: 1.15rem 1.15rem 1.25rem;
+      color: var(--text); margin-top: 0.65rem; border: 1px solid rgba(188,24,136,0.25);
+      box-shadow: 0 8px 32px rgba(188,24,136,0.12);
+    }}
+    .ia-report-panel[hidden] {{ display: none !important; }}
+    .ia-report-panel.is-loading .ia-report-body {{ opacity: 0.45; pointer-events: none; }}
+    .ia-report-head {{
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+      gap: 0.5rem; margin-bottom: 0.85rem;
+    }}
+    .ia-report-head p {{ font-size: 0.72rem; color: var(--muted); line-height: 1.45; max-width: 36rem; }}
+    .ia-report-title {{ font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem; }}
+    .ia-block {{ margin-bottom: 1rem; }}
+    .ia-block h4 {{
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.5rem;
+    }}
+    .ia-block p {{ font-size: 0.8rem; line-height: 1.55; margin-bottom: 0.45rem; }}
+    .ia-block-highlight {{
+      padding: 0.85rem 1rem; border-radius: 14px;
+      background: linear-gradient(135deg, #fff8f0, #fff5f8); border: 1px solid #fbcfe8;
+    }}
+    .ia-block-plan {{
+      padding: 0.85rem 1rem; border-radius: 14px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+    }}
+    .ia-block-plan h4 {{ color: #059669; }}
+    .ia-cards {{ display: grid; gap: 0.65rem; }}
+    @media(min-width:640px){{ .ia-cards{{ grid-template-columns:1fr 1fr; }} }}
+    .ia-card {{
+      padding: 0.75rem 0.85rem; border-radius: 12px;
+      background: #fafafa; border: 1px solid var(--border); font-size: 0.78rem; line-height: 1.45;
+    }}
+    .ia-card-warn {{ background: #fffbeb; border-color: #fde68a; }}
+    .ia-card-head {{ display: flex; justify-content: space-between; align-items: center; gap: 0.35rem; margin-bottom: 0.2rem; }}
+    .ia-handle {{ font-size: 0.68rem; color: var(--muted); display: block; margin-bottom: 0.35rem; }}
+    .ia-status {{
+      font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.12rem 0.4rem; border-radius: 20px; white-space: nowrap;
+    }}
+    .ia-status-hot {{ background: rgba(255,107,53,0.15); color: #ff6b35; }}
+    .ia-status-ok {{ background: #ecfdf5; color: #059669; }}
+    .ia-card ul, .ia-block ul {{ margin: 0.35rem 0 0 1rem; font-size: 0.76rem; }}
+    .ia-steps {{ margin: 0.35rem 0 0 1.15rem; font-size: 0.78rem; line-height: 1.55; }}
+    .ia-meta {{ font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; }}
+    .ia-empty {{ font-size: 0.78rem; color: var(--muted); line-height: 1.5; }}
+    .ia-spinner {{
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(220,39,67,0.25); border-top-color: #dc2743;
+      border-radius: 50%; animation: ia-spin 0.7s linear infinite; vertical-align: middle;
+    }}
+    @keyframes ia-spin {{ to {{ transform: rotate(360deg); }} }}
     .back-link {{ display: inline-flex; margin-top: 0.65rem; font-size: 0.78rem; color: rgba(255,255,255,0.55); }}
     main {{ max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }}
     .section-title {{ font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); margin: 1.5rem 0 0.75rem; }}
@@ -591,10 +879,23 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       e soma visualizações, curtidas e comentários para medir o engajamento real.
       Atualização diária às 08:00 · {r["publicacoes_coletadas"]} publicações analisadas nesta coleta.
     </div>
-    <div class="update-pill">{html.escape(updated_at)}</div>
+    <div class="header-actions">
+      <div class="update-pill">{html.escape(updated_at)}</div>
+      <button type="button" class="btn-ia-analise" id="btn-ia-analise" aria-controls="ia-report-panel">
+        <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H9a2 2 0 01-2-2v-1H6a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5z"/></svg>
+        Gerar análise com IA
+      </button>
+    </div>
     <a class="back-link" href="/">← Voltar ao acompanhamento</a>
   </header>
   <main>
+    <div class="ia-report-panel"{panel_hidden} id="ia-report-panel">
+      <div class="ia-report-head">
+        <p>A Clauth IA analisa as últimas publicações, identifica o que está funcionando e sugere como trilhar a mesma vertente de conteúdo.</p>
+        <button type="button" class="btn-ia-refresh" id="btn-ia-refresh">↻ Atualizar análise</button>
+      </div>
+      <div class="ia-report-body" id="ia-report-body">{ia_body_html}</div>
+    </div>
     <p class="section-title">Resumo geral</p>
     <div class="kpi-grid">
       <div class="kpi-card highlight"><div class="kpi-label">Engajamento total</div><div class="kpi-value">{r["engajamento_fmt"]}</div></div>
@@ -626,6 +927,112 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     </div>
   </main>
   <footer class="app-footer">Clauth Hub · Últimas {max_posts} publicações por perfil · views, curtidas e comentários</footer>
+  <script>
+    const IA_CONTEXT = {ia_context_json};
+
+    function esc(s) {{
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }}
+
+    function renderAnalise(a) {{
+      if (!a) return '<p class="ia-empty">Não foi possível gerar a análise. Tente novamente.</p>';
+      let h = '<h3 class="ia-report-title">' + esc(a.titulo || 'Relatório estratégico de engajamento') + '</h3>';
+      if (a.resumo_executivo) {{
+        h += '<div class="ia-block ia-block-highlight"><h4>Resumo executivo</h4>';
+        a.resumo_executivo.split('\\n\\n').filter(Boolean).forEach(p => {{ h += '<p>' + esc(p) + '</p>'; }});
+        h += '</div>';
+      }}
+      if (a.paginas_destaque && a.paginas_destaque.length) {{
+        h += '<div class="ia-block"><h4>Páginas que estão dando certo</h4><div class="ia-cards">';
+        a.paginas_destaque.forEach(item => {{
+          const st = (item.status || '').toLowerCase();
+          const cls = st.includes('alta') ? 'ia-status-hot' : 'ia-status-ok';
+          h += '<article class="ia-card"><div class="ia-card-head"><strong>' + esc(item.pagina) +
+            '</strong><span class="ia-status ' + cls + '">' + esc(item.status) + '</span></div>' +
+            '<span class="ia-handle">' + esc(item.handle) + '</span>' +
+            '<p><strong>Por que funciona:</strong> ' + esc(item.porque_funciona) + '</p>' +
+            '<p><strong>Vertente de conteúdo:</strong> ' + esc(item.vertente_conteudo) + '</p></article>';
+        }});
+        h += '</div></div>';
+      }}
+      if (a.padroes_vencedores) {{
+        h += '<div class="ia-block"><h4>Padrões dos posts vencedores</h4><p>' + esc(a.padroes_vencedores) + '</p></div>';
+      }}
+      const plano = a.plano_conteudo || {{}};
+      if (plano.vertente_principal || (plano.replicar && plano.replicar.length)) {{
+        h += '<div class="ia-block ia-block-plan"><h4>Plano de conteúdo · trilhar a vertente certa</h4>';
+        if (plano.vertente_principal) h += '<p><strong>Vertente principal:</strong> ' + esc(plano.vertente_principal) + '</p>';
+        if (plano.replicar && plano.replicar.length) {{
+          h += '<p><strong>O que replicar:</strong></p><ul>' + plano.replicar.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+        }}
+        if (plano.evitar && plano.evitar.length) {{
+          h += '<p><strong>O que evitar:</strong></p><ul>' + plano.evitar.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+        }}
+        if (plano.frequencia_sugerida) h += '<p><strong>Frequência sugerida:</strong> ' + esc(plano.frequencia_sugerida) + '</p>';
+        h += '</div>';
+      }}
+      if (a.paginas_melhorar && a.paginas_melhorar.length) {{
+        h += '<div class="ia-block"><h4>Como melhorar</h4><div class="ia-cards">';
+        a.paginas_melhorar.forEach(item => {{
+          const acoes = (item.acoes || []).map(x => '<li>' + esc(x) + '</li>').join('');
+          h += '<article class="ia-card ia-card-warn"><strong>' + esc(item.pagina) + '</strong><p>' +
+            esc(item.diagnostico) + '</p><ul>' + acoes + '</ul></article>';
+        }});
+        h += '</div></div>';
+      }}
+      if (a.proximos_passos && a.proximos_passos.length) {{
+        h += '<div class="ia-block"><h4>Próximos passos</h4><ol class="ia-steps">' +
+          a.proximos_passos.map(p => '<li>' + esc(p) + '</li>').join('') + '</ol></div>';
+      }}
+      if (a.gerado_em) h += '<p class="ia-meta">Gerado em ' + esc(a.gerado_em.slice(0, 16).replace('T', ' ')) + '</p>';
+      return h;
+    }}
+
+    async function fetchAnaliseIA() {{
+      const panel = document.getElementById('ia-report-panel');
+      const body = document.getElementById('ia-report-body');
+      const btnMain = document.getElementById('btn-ia-analise');
+      const btnRefresh = document.getElementById('btn-ia-refresh');
+      panel.hidden = false;
+      panel.classList.add('is-loading');
+      btnMain.disabled = true;
+      btnRefresh.disabled = true;
+      body.innerHTML = '<p class="ia-empty"><span class="ia-spinner"></span> A Clauth IA está analisando ' +
+        IA_CONTEXT.resumo.publicacoes_coletadas + ' publicações…</p>';
+      panel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      try {{
+        const res = await fetch('/api/analise-engajamento', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ context: IA_CONTEXT }}),
+        }});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Falha na análise');
+        body.innerHTML = renderAnalise(data.analise);
+      }} catch (err) {{
+        body.innerHTML = '<p class="ia-empty">Erro ao gerar análise: ' + esc(err.message) +
+          '. Verifique se OPENROUTER_API_KEY está configurada na Vercel.</p>';
+      }} finally {{
+        panel.classList.remove('is-loading');
+        btnMain.disabled = false;
+        btnRefresh.disabled = false;
+      }}
+    }}
+
+    function openAnalisePanel() {{
+      const panel = document.getElementById('ia-report-panel');
+      const body = document.getElementById('ia-report-body');
+      panel.hidden = false;
+      panel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      if (body.querySelector('.ia-report-title')) return;
+      fetchAnaliseIA();
+    }}
+
+    document.getElementById('btn-ia-analise').addEventListener('click', openAnalisePanel);
+    document.getElementById('btn-ia-refresh').addEventListener('click', fetchAnaliseIA);
+  </script>
 </body>
 </html>"""
 
@@ -638,6 +1045,16 @@ def update_and_save(
     updated_at: str,
 ) -> dict:
     data = compute_engajamento(pages, all_metrics, api_key, model)
+
+    if api_key:
+        print("Gerando análise estratégica Clauth IA...")
+        analise = generate_ia_analise(_build_ia_context(data), api_key, model)
+        if analise:
+            data["analise_ia"] = analise
+            print("  ✓ Análise IA gerada")
+        else:
+            print("  [aviso] Análise IA não gerada", file=sys.stderr)
+
     payload = {
         **data,
         "updated_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
