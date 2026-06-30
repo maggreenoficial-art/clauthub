@@ -322,12 +322,40 @@ def collect_metrics(page: dict, api_key: str | None, model: str, cache: dict[int
     return metrics
 
 
+def build_followers_lookup(
+    relatorio_pages: list,
+    hub_pages: list,
+    cache: dict[int, dict],
+) -> dict[str, int]:
+    """Mapeia handle Instagram → seguidores do cache do hub principal."""
+    hub_by_handle = {
+        p["instagram_handle"].lstrip("@"): p["id"]
+        for p in hub_pages
+        if p.get("instagram_handle")
+    }
+    lookup: dict[str, int] = {}
+    for p in relatorio_pages:
+        handle = (p.get("instagram_handle") or "").lstrip("@")
+        alt = (p.get("instagram_handle_alt") or "").lstrip("@")
+        for h in (handle, alt):
+            if not h:
+                continue
+            page_id = hub_by_handle.get(h)
+            if page_id is None:
+                continue
+            seg = (cache.get(page_id) or {}).get("instagram", {}).get("seguidores")
+            if seg is not None:
+                lookup[handle] = seg
+    return lookup
+
+
 def fetch_ig_followers_for_relatorio(
     handle: str,
     name: str,
     api_key: str | None,
     model: str,
     alt_handle: str | None = None,
+    cached_seguidores: int | None = None,
 ) -> dict:
     """Busca seguidores Instagram para o relatório financeiro."""
     ig_url = f"https://www.instagram.com/{handle}/"
@@ -359,19 +387,36 @@ def fetch_ig_followers_for_relatorio(
         except Exception as exc:
             print(f"  [aviso] OpenRouter relatório ({name}): {exc}", file=sys.stderr)
 
+    if seguidores is None and cached_seguidores is not None:
+        seguidores = cached_seguidores
+        source = "cache"
+
     return {"seguidores": seguidores, "source": source}
 
 
-def make_relatorio_fetcher(api_key: str | None, model: str, config_pages: list) -> callable:
+def make_relatorio_fetcher(
+    api_key: str | None,
+    model: str,
+    config_pages: list,
+    followers_lookup: dict[str, int] | None = None,
+) -> callable:
     alt_map = {
         p.get("instagram_handle", ""): p.get("instagram_handle_alt")
         for p in config_pages
         if p.get("instagram_handle_alt")
     }
 
+    lookup = followers_lookup or {}
+
     def fetcher(handle: str, name: str) -> dict:
+        h = handle.lstrip("@")
         return fetch_ig_followers_for_relatorio(
-            handle, name, api_key, model, alt_map.get(handle)
+            handle,
+            name,
+            api_key,
+            model,
+            alt_map.get(handle),
+            lookup.get(h),
         )
 
     return fetcher
@@ -1266,7 +1311,8 @@ def main() -> int:
 
     print("\n--- Relatório financeiro ---")
     relatorio_config = json.loads((ROOT / "config" / "relatorio_financeiro.json").read_text(encoding="utf-8"))
-    fetcher = make_relatorio_fetcher(api_key, model, relatorio_config["paginas"])
+    followers_lookup = build_followers_lookup(relatorio_config["paginas"], pages, metrics_cache)
+    fetcher = make_relatorio_fetcher(api_key, model, relatorio_config["paginas"], followers_lookup)
     for p in relatorio_config["paginas"]:
         print(f"• {p['nome']} (@{p['instagram_handle']})")
     rel_payload = update_relatorio(fetcher, model, updated_at)
