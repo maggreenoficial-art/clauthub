@@ -1452,6 +1452,54 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
 </html>"""
 
 
+def _persist_engajamento(data: dict, updated_at: str, model: str) -> dict:
+    data = _normalize_engajamento_data(data)
+    payload = {
+        **data,
+        "updated_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
+        "updated_at_fmt": updated_at,
+        "model": model,
+    }
+    ENGAJAMENTO_DATA.parent.mkdir(parents=True, exist_ok=True)
+    ENGAJAMENTO_HTML.parent.mkdir(parents=True, exist_ok=True)
+    ENGAJAMENTO_DATA.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    ENGAJAMENTO_HTML.write_text(render_engajamento_html(data, updated_at), encoding="utf-8")
+    print(f"Publicações no painel: {data['resumo']['publicacoes_coletadas']}")
+    return data
+
+
+def update_engajamento_daily(
+    pages: list,
+    all_metrics: list,
+    api_key: str | None,
+    model: str,
+    updated_at: str,
+) -> dict:
+    """Atualização rápida diária: reaproveita cache e atualiza data/HTML (sem scrape pesado)."""
+    cached = load_engajamento_cache()
+    if cached and (cached.get("resumo") or {}).get("publicacoes_coletadas", 0) >= 50:
+        data = _normalize_engajamento_data(dict(cached))
+        print(
+            f"  [diário] Engajamento via cache: {data['resumo']['publicacoes_coletadas']} publicações",
+            file=sys.stderr,
+        )
+    else:
+        print("  [diário] Cache insuficiente — coleta completa...", file=sys.stderr)
+        return update_and_save(pages, all_metrics, api_key, model, updated_at)
+
+    if api_key:
+        try:
+            print("Gerando análise estratégica Clauth IA...")
+            analise = generate_ia_analise(_build_ia_context(data), api_key, model)
+            if analise:
+                data["analise_ia"] = analise
+                print("  ✓ Análise IA gerada")
+        except Exception as exc:
+            print(f"  [aviso] Análise IA: {exc}", file=sys.stderr)
+
+    return _persist_engajamento(data, updated_at, model)
+
+
 def update_and_save(
     pages: list,
     all_metrics: list,
@@ -1464,23 +1512,15 @@ def update_and_save(
     save_engajamento_cache(data)
 
     if api_key:
-        print("Gerando análise estratégica Clauth IA...")
-        analise = generate_ia_analise(_build_ia_context(data), api_key, model)
-        if analise:
-            data["analise_ia"] = analise
-            print("  ✓ Análise IA gerada")
-        else:
-            print("  [aviso] Análise IA não gerada", file=sys.stderr)
+        try:
+            print("Gerando análise estratégica Clauth IA...")
+            analise = generate_ia_analise(_build_ia_context(data), api_key, model)
+            if analise:
+                data["analise_ia"] = analise
+                print("  ✓ Análise IA gerada")
+            else:
+                print("  [aviso] Análise IA não gerada", file=sys.stderr)
+        except Exception as exc:
+            print(f"  [aviso] Análise IA: {exc}", file=sys.stderr)
 
-    payload = {
-        **data,
-        "updated_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
-        "updated_at_fmt": updated_at,
-        "model": model,
-    }
-    ENGAJAMENTO_DATA.parent.mkdir(parents=True, exist_ok=True)
-    ENGAJAMENTO_HTML.parent.mkdir(parents=True, exist_ok=True)
-    ENGAJAMENTO_DATA.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    ENGAJAMENTO_HTML.write_text(render_engajamento_html(data, updated_at), encoding="utf-8")
-    print(f"Publicações raspadas: {data['resumo']['publicacoes_coletadas']}")
-    return data
+    return _persist_engajamento(data, updated_at, model)

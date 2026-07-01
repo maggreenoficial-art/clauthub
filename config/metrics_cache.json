@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-06-29T11:44:57.983633-03:00",
+  "updated_at": "2026-07-01T11:25:33.311608-03:00",
   "pages": {
     "1": {
       "id": 1,
       "name": "Alerta Rio 360",
       "facebook": {
-        "curtidas": 576,
-        "falando_sobre": 118,
-        "curtidas_fmt": "576",
-        "falando_fmt": "118"
+        "curtidas": 591,
+        "falando_sobre": 112,
+        "curtidas_fmt": "591",
+        "falando_fmt": "112"
       },
       "instagram": {
-        "seguidores": 8074,
+        "seguidores": 8467,
         "seguindo": 587,
-        "posts": 828,
-        "seguidores_fmt": "8.074",
+        "posts": 867,
+        "seguidores_fmt": "8.467",
         "seguindo_fmt": "587",
-        "posts_fmt": "828"
+        "posts_fmt": "867"
       },
       "source": "http"
     },
@@ -24,18 +24,18 @@
       "id": 2,
       "name": "Fala Zona Oeste RJ",
       "facebook": {
-        "curtidas": 709,
-        "falando_sobre": 140,
-        "curtidas_fmt": "709",
-        "falando_fmt": "140"
+        "curtidas": 712,
+        "falando_sobre": 75,
+        "curtidas_fmt": "712",
+        "falando_fmt": "75"
       },
       "instagram": {
-        "seguidores": 7310,
-        "seguindo": 1516,
-        "posts": 685,
-        "seguidores_fmt": "7.310",
-        "seguindo_fmt": "1.516",
-        "posts_fmt": "685"
+        "seguidores": 7364,
+        "seguindo": 1517,
+        "posts": 719,
+        "seguidores_fmt": "7.364",
+        "seguindo_fmt": "1.517",
+        "posts_fmt": "719"
       },
       "source": "http"
     },
@@ -43,18 +43,18 @@
       "id": 3,
       "name": "Segurança em Pauta RJ",
       "facebook": {
-        "curtidas": 2346,
-        "falando_sobre": 402,
-        "curtidas_fmt": "2.346",
-        "falando_fmt": "402"
+        "curtidas": 2381,
+        "falando_sobre": 454,
+        "curtidas_fmt": "2.381",
+        "falando_fmt": "454"
       },
       "instagram": {
-        "seguidores": 7711,
-        "seguindo": 721,
-        "posts": 623,
-        "seguidores_fmt": "7.711",
-        "seguindo_fmt": "721",
-        "posts_fmt": "623"
+        "seguidores": 8043,
+        "seguindo": 723,
+        "posts": 638,
+        "seguidores_fmt": "8.043",
+        "seguindo_fmt": "723",
+        "posts_fmt": "638"
       },
       "source": "http"
     },
@@ -62,18 +62,18 @@
       "id": 4,
       "name": "Jacarepaguá Agora RJ",
       "facebook": {
-        "curtidas": 5708,
-        "falando_sobre": 1575,
-        "curtidas_fmt": "5.708",
-        "falando_fmt": "1.575"
+        "curtidas": 5956,
+        "falando_sobre": 1532,
+        "curtidas_fmt": "5.956",
+        "falando_fmt": "1.532"
       },
       "instagram": {
-        "seguidores": 8812,
-        "seguindo": 1164,
-        "posts": 675,
-        "seguidores_fmt": "8.812",
-        "seguindo_fmt": "1.164",
-        "posts_fmt": "675"
+        "seguidores": 9672,
+        "seguindo": 1166,
+        "posts": 709,
+        "seguidores_fmt": "9.672",
+        "seguindo_fmt": "1.166",
+        "posts_fmt": "709"
       },
       "source": "http"
     },
@@ -81,18 +81,18 @@
       "id": 5,
       "name": "Na Pauta RJ",
       "facebook": {
-        "curtidas": 3238,
-        "falando_sobre": 225,
-        "curtidas_fmt": "3.238",
-        "falando_fmt": "225"
+        "curtidas": 3272,
+        "falando_sobre": 237,
+        "curtidas_fmt": "3.272",
+        "falando_fmt": "237"
       },
       "instagram": {
-        "seguidores": 17000,
-        "seguindo": 653,
-        "posts": 521,
-        "seguidores_fmt": "17K",
-        "seguindo_fmt": "653",
-        "posts_fmt": "521"
+        "seguidores": 18000,
+        "seguindo": 654,
+        "posts": 559,
+        "seguidores_fmt": "18K",
+        "seguindo_fmt": "654",
+        "posts_fmt": "559"
       },
       "source": "http"
     },
@@ -100,18 +100,18 @@
       "id": 6,
       "name": "Pulso da Serra",
       "facebook": {
-        "curtidas": 5299,
-        "falando_sobre": 1362,
-        "curtidas_fmt": "5.299",
-        "falando_fmt": "1.362"
+        "curtidas": 5548,
+        "falando_sobre": 1184,
+        "curtidas_fmt": "5.548",
+        "falando_fmt": "1.184"
       },
       "instagram": {
-        "seguidores": 8558,
-        "seguindo": 492,
-        "posts": 447,
-        "seguidores_fmt": "8.558",
-        "seguindo_fmt": "492",
-        "posts_fmt": "447"
+        "seguidores": 9456,
+        "seguindo": 494,
+        "posts": 465,
+        "seguidores_fmt": "9.456",
+        "seguindo_fmt": "494",
+        "posts_fmt": "465"
       },
       "source": "http"
     },
@@ -125,12 +125,12 @@
         "falando_fmt": "—"
       },
       "instagram": {
-        "seguidores": 4057,
+        "seguidores": 4298,
         "seguindo": 202,
-        "posts": 425,
-        "seguidores_fmt": "4.057",
+        "posts": 451,
+        "seguidores_fmt": "4.298",
         "seguindo_fmt": "202",
-        "posts_fmt": "425"
+        "posts_fmt": "451"
       },
       "source": "http"
     },
@@ -138,18 +138,18 @@
       "id": 8,
       "name": "Tá Rolando nos Lagos",
       "facebook": {
-        "curtidas": 838,
-        "falando_sobre": 661,
-        "curtidas_fmt": "838",
-        "falando_fmt": "661"
+        "curtidas": 859,
+        "falando_sobre": 369,
+        "curtidas_fmt": "859",
+        "falando_fmt": "369"
       },
       "instagram": {
-        "seguidores": 5504,
-        "seguindo": 835,
-        "posts": 476,
-        "seguidores_fmt": "5.504",
-        "seguindo_fmt": "835",
-        "posts_fmt": "476"
+        "seguidores": 6045,
+        "seguindo": 834,
+        "posts": 498,
+        "seguidores_fmt": "6.045",
+        "seguindo_fmt": "834",
+        "posts_fmt": "498"
       },
       "source": "http"
     },
@@ -163,12 +163,12 @@
         "falando_fmt": "—"
       },
       "instagram": {
-        "seguidores": 7306,
-        "seguindo": 918,
-        "posts": 796,
-        "seguidores_fmt": "7.306",
-        "seguindo_fmt": "918",
-        "posts_fmt": "796"
+        "seguidores": 7994,
+        "seguindo": 921,
+        "posts": 835,
+        "seguidores_fmt": "7.994",
+        "seguindo_fmt": "921",
+        "posts_fmt": "835"
       },
       "source": "http"
     },
@@ -176,18 +176,18 @@
       "id": 10,
       "name": "Radar Nova Iguaçu",
       "facebook": {
-        "curtidas": 1220,
-        "falando_sobre": 493,
-        "curtidas_fmt": "1.220",
-        "falando_fmt": "493"
+        "curtidas": 1238,
+        "falando_sobre": 350,
+        "curtidas_fmt": "1.238",
+        "falando_fmt": "350"
       },
       "instagram": {
-        "seguidores": 6727,
+        "seguidores": 7110,
         "seguindo": 831,
-        "posts": 674,
-        "seguidores_fmt": "6.727",
+        "posts": 711,
+        "seguidores_fmt": "7.110",
         "seguindo_fmt": "831",
-        "posts_fmt": "674"
+        "posts_fmt": "711"
       },
       "source": "http"
     },
@@ -195,18 +195,18 @@
       "id": 11,
       "name": "Ramal da Baixada",
       "facebook": {
-        "curtidas": 664,
-        "falando_sobre": 109,
-        "curtidas_fmt": "664",
-        "falando_fmt": "109"
+        "curtidas": 663,
+        "falando_sobre": 36,
+        "curtidas_fmt": "663",
+        "falando_fmt": "36"
       },
       "instagram": {
-        "seguidores": 6935,
+        "seguidores": 6970,
         "seguindo": 978,
-        "posts": 773,
-        "seguidores_fmt": "6.935",
+        "posts": 810,
+        "seguidores_fmt": "6.970",
         "seguindo_fmt": "978",
-        "posts_fmt": "773"
+        "posts_fmt": "810"
       },
       "source": "http"
     },
@@ -214,10 +214,10 @@
       "id": 12,
       "name": "Acorda Zona Norte",
       "facebook": {
-        "curtidas": 415,
-        "falando_sobre": 160,
-        "curtidas_fmt": "415",
-        "falando_fmt": "160"
+        "curtidas": 437,
+        "falando_sobre": 139,
+        "curtidas_fmt": "437",
+        "falando_fmt": "139"
       },
       "instagram": {
         "seguidores": null,
@@ -233,18 +233,18 @@
       "id": 13,
       "name": "Costa Verde em Pauta",
       "facebook": {
-        "curtidas": 666,
-        "falando_sobre": 330,
-        "curtidas_fmt": "666",
-        "falando_fmt": "330"
+        "curtidas": 699,
+        "falando_sobre": 209,
+        "curtidas_fmt": "699",
+        "falando_fmt": "209"
       },
       "instagram": {
-        "seguidores": 5825,
+        "seguidores": 6459,
         "seguindo": 271,
-        "posts": 395,
-        "seguidores_fmt": "5.825",
+        "posts": 417,
+        "seguidores_fmt": "6.459",
         "seguindo_fmt": "271",
-        "posts_fmt": "395"
+        "posts_fmt": "417"
       },
       "source": "http"
     },
@@ -252,18 +252,18 @@
       "id": 14,
       "name": "Caxias em Foco",
       "facebook": {
-        "curtidas": 6388,
-        "falando_sobre": 443,
-        "curtidas_fmt": "6.388",
-        "falando_fmt": "443"
+        "curtidas": 6419,
+        "falando_sobre": 325,
+        "curtidas_fmt": "6.419",
+        "falando_fmt": "325"
       },
       "instagram": {
-        "seguidores": 9406,
+        "seguidores": 10000,
         "seguindo": 979,
-        "posts": 681,
-        "seguidores_fmt": "9.406",
+        "posts": 714,
+        "seguidores_fmt": "10K",
         "seguindo_fmt": "979",
-        "posts_fmt": "681"
+        "posts_fmt": "714"
       },
       "source": "http"
     }

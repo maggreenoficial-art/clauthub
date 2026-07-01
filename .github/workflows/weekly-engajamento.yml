@@ -1,0 +1,38 @@
+name: Engajamento Completo Semanal
+
+on:
+  schedule:
+    # Domingo 08:00 BRT = 11:00 UTC — scrape completo (50 posts/página)
+    - cron: "0 11 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  engajamento-completo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r scripts/requirements.txt
+
+      - name: Scrape completo de engajamento
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: google/gemini-2.5-flash
+          ENGAJAMENTO_SCRAPE_COMPLETO: "1"
+        run: |
+          export OPENROUTER_API_KEY="$(printf '%s' "$OPENROUTER_API_KEY" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          python scripts/update_metrics.py
+
+      - name: Publicar engajamento atualizado
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: scrape completo semanal de engajamento (50 posts/pagina)"
+          file_pattern: "engajamento/index.html config/engajamento_cache.json"

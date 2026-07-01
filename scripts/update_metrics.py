@@ -7,6 +7,7 @@ import html
 import json
 import os
 import re
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -15,7 +16,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from engajamento import update_and_save as update_engajamento
+from engajamento import update_and_save, update_engajamento_daily
 from relatorio_financeiro import COLLECTION_TZ, collection_label, update_and_save as update_relatorio
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -1328,12 +1329,25 @@ def main() -> int:
     for p in pages:
         print(f"• {p['name']}")
     try:
-        eng_payload = update_engajamento(pages, all_metrics, api_key, model, updated_at)
+        full_scrape = os.getenv("ENGAJAMENTO_SCRAPE_COMPLETO", "").strip().lower() in ("1", "true", "yes")
+        if os.getenv("GITHUB_ACTIONS") == "true" and not full_scrape:
+            eng_payload = update_engajamento_daily(pages, all_metrics, api_key, model, updated_at)
+        else:
+            eng_payload = update_and_save(pages, all_metrics, api_key, model, updated_at)
         print(f"Engajamento total: {eng_payload['resumo']['engajamento_fmt']}")
     except Exception as exc:
         print(f"[erro] Engajamento não atualizado: {exc}", file=sys.stderr)
         import traceback
         traceback.print_exc()
+        # Último recurso: só atualiza a data no HTML existente
+        try:
+            from engajamento import ENGAJAMENTO_HTML, load_engajamento_cache, _normalize_engajamento_data, _persist_engajamento
+            cached = load_engajamento_cache()
+            if cached:
+                _persist_engajamento(_normalize_engajamento_data(dict(cached)), updated_at, model)
+                print("[recuperação] Engajamento restaurado do cache com data atualizada.")
+        except Exception as exc2:
+            print(f"[erro] Recuperação engajamento falhou: {exc2}", file=sys.stderr)
 
     print(f"\nConcluído! Métricas salvas em {METRICS_PATH}")
     print(f"Página atualizada: {INDEX_PATH}")
