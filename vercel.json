@@ -6,6 +6,7 @@
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/relatoriofinaceiro", "destination": "/relatoriofinaceiro/index.html" },
-    { "source": "/engajamento", "destination": "/engajamento/index.html" }
+    { "source": "/engajamento", "destination": "/engajamento/index.html" },
+    { "source": "/paginasclauth", "destination": "/paginasclauth/index.html" }
   ]
 }

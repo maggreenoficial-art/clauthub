@@ -106,6 +106,36 @@ def _parse_metrics_text(text: str) -> dict:
     return result
 
 
+def _parse_follower_count_from_text(text: str) -> int | None:
+    for pat in (
+        r"([\d.,]+[KkMm]?)\s*Followers",
+        r"([\d.,]+[KkMm]?)\s*followers",
+        r"([\d.,]+[KkMm]?)\s*seguidores",
+        r"([\d.,]+[KkMm]?)\s*Seguidores",
+    ):
+        m = re.search(pat, text, re.I)
+        if m:
+            n = _parse_number(m.group(1))
+            if n is not None:
+                return n
+    return None
+
+
+def _parse_follower_count_from_html(html_page: str) -> int | None:
+    for pat in (
+        r'"edge_followed_by":\s*\{\s*"count":\s*(\d+)',
+        r'"follower_count":\s*(\d+)',
+        r'"followers":\s*(\d+)',
+    ):
+        m = re.search(pat, html_page)
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:
+                pass
+    return None
+
+
 def _shortcode_from_url(url: str) -> str | None:
     m = re.search(r"instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)", url)
     return m.group(1) if m else None
@@ -343,6 +373,60 @@ class InstagramScraper:
                 m = re.search(pat, html_page)
                 if m:
                     return m.group(1)
+        return None
+
+    def fetch_profile_followers(self, handle: str) -> int | None:
+        """Retorna seguidores: og:description → API (com retry) → HTML embutido."""
+        handle = handle.lstrip("@")
+        profile_url = f"https://www.instagram.com/{handle}/"
+
+        try:
+            r = requests.get(
+                profile_url,
+                headers={"User-Agent": BOT_UA},
+                timeout=25,
+                allow_redirects=True,
+            )
+            if r.status_code == 200:
+                m = re.search(r'og:description" content="([^"]+)"', r.text)
+                if m:
+                    count = _parse_follower_count_from_text(htmlmod.unescape(m.group(1)))
+                    if count is not None:
+                        return count
+        except requests.RequestException:
+            pass
+
+        for attempt in range(3):
+            self._sleep()
+            try:
+                self.session.get(profile_url, timeout=25)
+                csrf = self.session.cookies.get("csrftoken", "")
+                r = self.session.get(
+                    f"https://www.instagram.com/api/v1/users/web_profile_info/?username={handle}",
+                    headers={
+                        "X-IG-App-ID": IG_APP_ID,
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": csrf,
+                        "Referer": profile_url,
+                    },
+                    timeout=25,
+                )
+                if r.status_code == 429:
+                    time.sleep(3 * (attempt + 1))
+                    continue
+                if r.status_code == 200:
+                    count = r.json().get("data", {}).get("user", {}).get("edge_followed_by", {}).get("count")
+                    if count is not None:
+                        return int(count)
+            except (requests.RequestException, json.JSONDecodeError, AttributeError, TypeError, ValueError):
+                pass
+            time.sleep(2 * (attempt + 1))
+
+        html_page = self._fetch(profile_url, BROWSER_UA)
+        if html_page:
+            count = _parse_follower_count_from_html(html_page)
+            if count is not None:
+                return count
         return None
 
     def fetch_posts_feed(self, handle: str, max_posts: int = DEFAULT_MAX_POSTS) -> list[PostMetrics]:

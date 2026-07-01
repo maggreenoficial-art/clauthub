@@ -43,4 +43,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: atualizacao automatica diaria de metricas (08:00 BRT)"
-          file_pattern: "index.html relatoriofinaceiro/index.html engajamento/index.html engajamento/thumbs/clauth-default.svg config/metrics_cache.json config/engajamento_cache.json"
+          file_pattern: "index.html relatoriofinaceiro/index.html engajamento/index.html engajamento/thumbs/clauth-default.svg paginasclauth/index.html config/metrics_cache.json config/engajamento_cache.json config/paginas_clauth_cache.json"

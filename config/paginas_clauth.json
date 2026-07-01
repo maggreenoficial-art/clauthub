@@ -1,0 +1,15 @@
+{
+  "titulo": "Páginas Clauth",
+  "paginas": [
+    { "nome": "SG Informa", "instagram_handle": "sginforma.ofc" },
+    { "nome": "SG Notícia", "instagram_handle": "sgnoticia" },
+    { "nome": "Notícias Maricá", "instagram_handle": "noticiasmarica.ofc" },
+    { "nome": "Notícias Niterói", "instagram_handle": "noticiasniteroi.ofc" },
+    { "nome": "Notícias Itaboraí", "instagram_handle": "noticiasitaborai" },
+    { "nome": "Macaé Acontece", "instagram_handle": "macaeacontece" },
+    { "nome": "Angra do Povo", "instagram_handle": "angradopovo" },
+    { "nome": "Portal Zona Sul RJ", "instagram_handle": "portalzonasul.rj" },
+    { "nome": "Baixada Acontece", "instagram_handle": "baixadaacontece" },
+    { "nome": "Fala Maricá", "instagram_handle": "fala.marica2.2" }
+  ]
+}

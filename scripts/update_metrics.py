@@ -17,6 +17,7 @@ import requests
 from dotenv import load_dotenv
 
 from engajamento import update_and_save, update_engajamento_daily
+from paginas_clauth import update_and_save as update_paginas_clauth, update_daily as update_paginas_clauth_daily
 from relatorio_financeiro import COLLECTION_TZ, collection_label, update_and_save as update_relatorio
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -1120,6 +1121,10 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
         <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
         Engajamento Instagram
       </a>
+      <a href="/paginasclauth" class="btn-engajamento" aria-label="Ver páginas Clauth">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        Páginas Clauth
+      </a>
     </div>
   </header>
 
@@ -1325,11 +1330,33 @@ def main() -> int:
     print(f"Investimento total: {rel_payload['resumo']['investimento_fmt']}")
     print(f"Seguidores totais: {rel_payload['resumo']['seguidores_fmt']}")
 
+    full_scrape = os.getenv("ENGAJAMENTO_SCRAPE_COMPLETO", "").strip().lower() in ("1", "true", "yes")
+
+    print("\n--- Páginas Clauth ---")
+    try:
+        if os.getenv("GITHUB_ACTIONS") == "true" and not full_scrape:
+            clauth_payload = update_paginas_clauth_daily(model, updated_at, api_key)
+        else:
+            clauth_payload = update_paginas_clauth(api_key, model, updated_at)
+        print(f"Engajamento Clauth: {clauth_payload['resumo']['engajamento_fmt']}")
+        print(f"Seguidores (soma): {clauth_payload['resumo'].get('seguidores_fmt', '—')}")
+    except Exception as exc:
+        print(f"[erro] Páginas Clauth não atualizadas: {exc}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        try:
+            from paginas_clauth import load_cache, normalize_data, persist
+            cached = load_cache()
+            if cached:
+                persist(normalize_data(dict(cached)), updated_at, model)
+                print("[recuperação] Páginas Clauth restauradas do cache com data atualizada.")
+        except Exception as exc2:
+            print(f"[erro] Recuperação Páginas Clauth falhou: {exc2}", file=sys.stderr)
+
     print("\n--- Engajamento das páginas ---")
     for p in pages:
         print(f"• {p['name']}")
     try:
-        full_scrape = os.getenv("ENGAJAMENTO_SCRAPE_COMPLETO", "").strip().lower() in ("1", "true", "yes")
         if os.getenv("GITHUB_ACTIONS") == "true" and not full_scrape:
             eng_payload = update_engajamento_daily(pages, all_metrics, api_key, model, updated_at)
         else:
@@ -1353,6 +1380,7 @@ def main() -> int:
     print(f"Página atualizada: {INDEX_PATH}")
     print(f"Relatório atualizado: relatoriofinaceiro/index.html")
     print(f"Engajamento atualizado: engajamento/index.html")
+    print(f"Páginas Clauth atualizadas: paginasclauth/index.html")
     return 0
 
 

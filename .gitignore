@@ -5,3 +5,4 @@ __pycache__/
 data/metrics.json
 data/relatorio_financeiro.json
 data/engajamento.json
+data/paginas_clauth.json

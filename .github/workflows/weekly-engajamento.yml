@@ -35,4 +35,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: scrape completo semanal de engajamento (50 posts/pagina)"
-          file_pattern: "engajamento/index.html config/engajamento_cache.json"
+          file_pattern: "engajamento/index.html config/engajamento_cache.json paginasclauth/index.html config/paginas_clauth_cache.json"
