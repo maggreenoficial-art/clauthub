@@ -506,10 +506,11 @@ class InstagramScraper:
                 }
             ],
         }
+        key = (api_key or "").strip().replace("\r", "").replace("\n", "")
         r = requests.post(
             OPENROUTER_URL,
             headers={
-                "Authorization": f"Bearer {api_key}",
+                "Authorization": f"Bearer {key}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://clauthub.local",
                 "X-Title": "Clauth Hub",

@@ -35,7 +35,9 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: google/gemini-2.5-flash
-        run: python scripts/update_metrics.py
+        run: |
+          export OPENROUTER_API_KEY="$(printf '%s' "$OPENROUTER_API_KEY" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          python scripts/update_metrics.py
 
       - name: Publicar paginas atualizadas
         uses: stefanzweifel/git-auto-commit-action@v5

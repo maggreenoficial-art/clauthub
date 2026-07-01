@@ -42,7 +42,9 @@ IG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 
 def _clean_api_key(api_key: str | None) -> str | None:
     if not api_key or api_key.strip() == "sua-chave-aqui":
         return None
-    return api_key.strip()
+    # Remove newlines/espaços que quebram o header Authorization no requests
+    cleaned = api_key.strip().replace("\r", "").replace("\n", "").strip()
+    return cleaned or None
 
 
 def load_metrics_cache() -> dict[int, dict]:
@@ -202,6 +204,9 @@ def openrouter_extract(
     ig_url: str,
 ) -> dict:
     """Usa OpenRouter + web_fetch quando o parse direto falha."""
+    key = _clean_api_key(api_key)
+    if not key:
+        raise ValueError("OPENROUTER_API_KEY inválida ou vazia")
     urls = [u for u in [fb_url, ig_url] if u]
     prompt = (
         f"Extraia as métricas públicas da página '{page_name}'.\n"
@@ -229,7 +234,7 @@ def openrouter_extract(
     r = requests.post(
         OPENROUTER_URL,
         headers={
-            "Authorization": f"Bearer {api_key.strip()}",
+            "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://visucliente.local",
             "X-Title": "Clauth Hub",
@@ -1322,8 +1327,13 @@ def main() -> int:
     print("\n--- Engajamento das páginas ---")
     for p in pages:
         print(f"• {p['name']}")
-    eng_payload = update_engajamento(pages, all_metrics, api_key, model, updated_at)
-    print(f"Engajamento total: {eng_payload['resumo']['engajamento_fmt']}")
+    try:
+        eng_payload = update_engajamento(pages, all_metrics, api_key, model, updated_at)
+        print(f"Engajamento total: {eng_payload['resumo']['engajamento_fmt']}")
+    except Exception as exc:
+        print(f"[erro] Engajamento não atualizado: {exc}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
 
     print(f"\nConcluído! Métricas salvas em {METRICS_PATH}")
     print(f"Página atualizada: {INDEX_PATH}")

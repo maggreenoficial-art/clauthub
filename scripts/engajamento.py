@@ -196,9 +196,10 @@ def load_engajamento_cache() -> dict | None:
 def save_engajamento_cache(data: dict) -> None:
     if (data.get("resumo") or {}).get("publicacoes_coletadas", 0) < 50:
         return
+    normalized = _normalize_engajamento_data(dict(data))
     payload = {
         "updated_at": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
-        **{k: v for k, v in data.items() if k not in ("updated_at", "updated_at_fmt", "model")},
+        **{k: v for k, v in normalized.items() if k not in ("updated_at", "updated_at_fmt", "model", "analise_ia")},
     }
     ENGAJAMENTO_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     ENGAJAMENTO_CACHE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -870,19 +871,35 @@ def compute_engajamento(
     }
 
 
+def _normalize_engajamento_data(data: dict) -> dict:
+    """Garante campos derivados exigidos pelo render (ex.: cache antigo sem top5)."""
+    pages = data.get("paginas") or []
+    if pages and "hot" not in pages[0]:
+        _mark_hot_pages(pages)
+    if not data.get("top5"):
+        ranked = sorted(pages, key=lambda x: x.get("engajamento_total", 0), reverse=True)
+        data["top5"] = [r for r in ranked if r.get("engajamento_total", 0) > 0][:5]
+    if not data.get("max_engajamento"):
+        top5 = data.get("top5") or []
+        data["max_engajamento"] = top5[0]["engajamento_total"] if top5 else 1
+    if not data.get("top_posts"):
+        data["top_posts"] = _build_top_posts(pages)
+    return data
+
+
 def _prefer_engajamento_cache(data: dict) -> dict:
     """Usa cache quando a coleta atual falhou parcialmente."""
     cached = load_engajamento_cache()
     if not cached:
-        return data
+        return _normalize_engajamento_data(data)
     cur = (data.get("resumo") or {}).get("publicacoes_coletadas", 0)
     prev = (cached.get("resumo") or {}).get("publicacoes_coletadas", 0)
     if prev > cur:
         print(f"  [cache] Engajamento: usando cache ({prev} pub.) em vez de {cur}", file=sys.stderr)
         merged = dict(cached)
         merged["max_posts_por_pagina"] = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
-        return merged
-    return data
+        return _normalize_engajamento_data(merged)
+    return _normalize_engajamento_data(data)
 
 
 def _posts_with_fmt(posts: list[dict]) -> list[dict]:
@@ -974,8 +991,7 @@ def _render_post_card(post: dict, rank: int | None = None) -> str:
 
 
 def render_engajamento_html(data: dict, updated_at: str) -> str:
-    if data["paginas"] and "hot" not in data["paginas"][0]:
-        _mark_hot_pages(data["paginas"])
+    data = _normalize_engajamento_data(data)
 
     top_posts = data.get("top_posts") or _build_top_posts(data["paginas"], limit=TOP_POSTS_GLOBAL)
 
