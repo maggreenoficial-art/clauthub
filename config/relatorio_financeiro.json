@@ -3,7 +3,7 @@
   "investimento_extra": 10000,
   "fonte": "Dados oficiais de mídia Meta Ads e seguidores atuais informados pela Meta.",
   "paginas": [
-    { "nome": "Acorda Zona Norte", "instagram_handle": "acordanorterj", "investimento": 5309.57, "seguidores_relatorio": 8352, "segmentacao": "Norte Fluminense" },
+    { "nome": "Acorda Zona Norte", "instagram_handle": "acordazonanorte", "investimento": 5309.57, "seguidores_relatorio": 8352, "segmentacao": "Norte Fluminense" },
     { "nome": "Fala Oeste", "instagram_handle": "falazoeste", "investimento": 4433.65, "seguidores_relatorio": 6143, "segmentacao": "Zona Oeste do Rio de Janeiro" },
     { "nome": "Caxias em Foco", "instagram_handle": "caxiasemfocorj", "investimento": 4393.12, "seguidores_relatorio": 7859, "segmentacao": "Duque de Caxias" },
     { "nome": "Giro Baixada RJ", "instagram_handle": "girobaixadarj", "investimento": 4319.79, "seguidores_relatorio": 6143, "segmentacao": "Baixada Fluminense" },
