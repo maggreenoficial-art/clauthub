@@ -501,6 +501,76 @@ def render_card(page: dict, metrics: dict, index: int, total: int) -> str:
         </article>"""
 
 
+def build_followers_summary(pages: list, all_metrics: list) -> dict:
+    items: list[dict] = []
+    total = 0
+    com_dados = 0
+    for p, m in zip(pages, all_metrics):
+        seg = m.get("instagram", {}).get("seguidores")
+        if seg is not None:
+            seg = int(seg)
+            total += seg
+            com_dados += 1
+        items.append({
+            "nome": p["name"],
+            "handle": f"@{p.get('instagram_handle', '')}",
+            "seguidores": seg,
+            "seguidores_fmt": format_count(seg) if seg is not None else "—",
+        })
+    items.sort(key=lambda x: x["seguidores"] or 0, reverse=True)
+    return {
+        "total": total,
+        "total_fmt": format_count(total) if total else "—",
+        "paginas_com_dados": com_dados,
+        "paginas_total": len(pages),
+        "items": items,
+    }
+
+
+def render_followers_section(summary: dict) -> str:
+    items = summary["items"]
+    if not items:
+        return ""
+
+    with_data = [i for i in items if i["seguidores"]]
+    max_seg = with_data[0]["seguidores"] if with_data else 1
+    rows = ""
+    for i, item in enumerate(items, 1):
+        seg = item["seguidores"] or 0
+        pct = min(100, int(seg / max_seg * 100)) if seg and max_seg else 0
+        rows += f"""
+        <div class="followers-row">
+          <div class="followers-row-head">
+            <span class="followers-rank">{i}</span>
+            <div class="followers-meta">
+              <span class="followers-name">{html.escape(item["nome"])}</span>
+              <span class="followers-handle">{html.escape(item["handle"])}</span>
+            </div>
+            <span class="followers-count">{item["seguidores_fmt"]}</span>
+          </div>
+          <div class="followers-bar-bg"><div class="followers-bar" style="width:{pct}%"></div></div>
+        </div>"""
+
+    return f"""
+  <section class="followers-section" aria-label="Seguidores Instagram">
+    <div class="followers-panel">
+      <div class="followers-header">
+        <div>
+          <p class="followers-kicker">Instagram</p>
+          <h2 class="followers-title">Seguidores por página</h2>
+          <p class="followers-desc">Soma de todas as {summary["paginas_total"]} páginas monitoradas nesta coleta.</p>
+        </div>
+        <div class="followers-total-card">
+          <span class="followers-total-label">Total de seguidores</span>
+          <span class="followers-total-value">{summary["total_fmt"]}</span>
+          <span class="followers-total-sub">{summary["paginas_com_dados"]}/{summary["paginas_total"]} com dados</span>
+        </div>
+      </div>
+      <div class="followers-list">{rows}</div>
+    </div>
+  </section>"""
+
+
 def sort_pages_for_index(pages: list, all_metrics: list) -> tuple[list, list]:
     """Ordena o carrossel da página inicial por seguidores no Instagram (maior → menor)."""
     paired = sorted(
@@ -530,6 +600,7 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
     cards = "".join(render_card(p, m, i, total) for i, (p, m) in enumerate(zip(pages, all_metrics)))
     stories = "".join(render_story_item(p, i) for i, p in enumerate(pages))
     dots = "".join(f'<span class="dot{" active" if i == 0 else ""}" data-goto="{i}"></span>' for i in range(total))
+    followers_html = render_followers_section(build_followers_summary(pages, all_metrics))
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -1099,6 +1170,146 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
     @media (min-width: 768px) {{
       .carousel-viewport {{ max-width: 400px; }}
     }}
+
+    /* ── Seguidores ── */
+    .followers-section {{
+      padding: 0 1.25rem 1rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }}
+
+    .followers-panel {{
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 1.1rem 1.15rem 1.2rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }}
+
+    .followers-header {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }}
+
+    .followers-kicker {{
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }}
+
+    .followers-title {{
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }}
+
+    .followers-desc {{
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 22rem;
+    }}
+
+    .followers-total-card {{
+      text-align: right;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(240,148,51,0.12), rgba(188,24,136,0.1));
+      border: 1px solid rgba(188,24,136,0.2);
+      min-width: 9rem;
+    }}
+
+    .followers-total-label {{
+      display: block;
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }}
+
+    .followers-total-value {{
+      display: block;
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0.2rem 0;
+      background: var(--ig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }}
+
+    .followers-total-sub {{
+      font-size: 0.65rem;
+      color: var(--muted);
+    }}
+
+    .followers-list {{
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }}
+
+    .followers-row-head {{
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-bottom: 0.3rem;
+    }}
+
+    .followers-rank {{
+      width: 1.35rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+      flex-shrink: 0;
+    }}
+
+    .followers-meta {{
+      flex: 1;
+      min-width: 0;
+    }}
+
+    .followers-name {{
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }}
+
+    .followers-handle {{
+      display: block;
+      font-size: 0.65rem;
+      color: var(--muted);
+    }}
+
+    .followers-count {{
+      font-size: 0.82rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }}
+
+    .followers-bar-bg {{
+      height: 7px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-left: 1.9rem;
+    }}
+
+    .followers-bar {{
+      height: 100%;
+      background: var(--ig-gradient);
+      border-radius: 4px;
+      min-width: 2px;
+    }}
   </style>
 </head>
 <body>
@@ -1133,6 +1344,8 @@ def render_index(pages: list, all_metrics: list, updated_at: str, model: str) ->
   <div class="info-banner">
     <p>Deslize para o lado ou use as setas para navegar entre as <strong>{total} páginas</strong>. Toque nos stories acima para ir direto.</p>
   </div>
+
+  {followers_html}
 
   <section class="carousel-section" aria-label="Páginas monitoradas">
     <p class="carousel-hint">← deslize para explorar →</p>
