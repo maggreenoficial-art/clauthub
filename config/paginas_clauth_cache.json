@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-01T12:47:27.405897-03:00",
+  "updated_at": "2026-07-02T10:00:18.462361-03:00",
   "titulo": "Páginas Clauth",
   "max_posts_por_pagina": 50,
   "resumo": {
@@ -12,8 +12,8 @@
     "publicacoes_coletadas": 500,
     "engajamento_total": 51107403,
     "engajamento_fmt": "51.1M",
-    "seguidores_total": 625905,
-    "seguidores_fmt": "625.9K",
+    "seguidores_total": 614105,
+    "seguidores_fmt": "614.1K",
     "paginas": 10,
     "paginas_hot": 7,
     "media_por_pagina": 5110740,
@@ -555,7 +555,7 @@
       "seguidores_fmt": "71K",
       "hot": true,
       "momentum_fmt": "111.7x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "Baixada Acontece",
@@ -1088,11 +1088,11 @@
         "handle": "@baixadaacontece",
         "source": "feed"
       },
-      "seguidores": 22000,
-      "seguidores_fmt": "22K",
+      "seguidores": 17700,
+      "seguidores_fmt": "17.7K",
       "hot": true,
       "momentum_fmt": "244.1x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "relatorio"
     },
     {
       "nome": "Notícias Niterói",
@@ -1629,7 +1629,7 @@
       "seguidores_fmt": "87K",
       "hot": true,
       "momentum_fmt": "13.7x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "SG Informa",
@@ -2166,7 +2166,7 @@
       "seguidores_fmt": "161K",
       "hot": true,
       "momentum_fmt": "3.6x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "SG Notícia",
@@ -2703,7 +2703,7 @@
       "seguidores_fmt": "173K",
       "hot": true,
       "momentum_fmt": "2.1x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "Notícias Itaboraí",
@@ -3236,11 +3236,11 @@
         "handle": "@noticiasitaborai",
         "source": "feed"
       },
-      "seguidores": 40000,
-      "seguidores_fmt": "40K",
+      "seguidores": 33300,
+      "seguidores_fmt": "33.3K",
       "hot": true,
       "momentum_fmt": "17.5x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "relatorio"
     },
     {
       "nome": "Fala Maricá",
@@ -3777,7 +3777,7 @@
       "seguidores_fmt": "33K",
       "hot": false,
       "momentum_fmt": "",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "Macaé Acontece",
@@ -4310,11 +4310,11 @@
         "handle": "@macaeacontece",
         "source": "feed"
       },
-      "seguidores": 19000,
-      "seguidores_fmt": "19K",
+      "seguidores": 18200,
+      "seguidores_fmt": "18.2K",
       "hot": true,
       "momentum_fmt": "11.5x",
-      "seguidores_source": "instagram"
+      "seguidores_source": "relatorio"
     },
     {
       "nome": "Portal Zona Sul RJ",
@@ -4851,7 +4851,7 @@
       "seguidores_fmt": "12K",
       "hot": false,
       "momentum_fmt": "",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     },
     {
       "nome": "Angra do Povo",
@@ -5388,7 +5388,7 @@
       "seguidores_fmt": "7.905",
       "hot": false,
       "momentum_fmt": "",
-      "seguidores_source": "instagram"
+      "seguidores_source": "cache"
     }
   ],
   "top5": [
