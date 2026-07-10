@@ -7,7 +7,6 @@ import html
 import json
 import os
 import re
-import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -176,15 +175,18 @@ def parse_facebook(desc: str) -> dict:
 
 def parse_instagram(desc: str) -> dict:
     result = {"seguidores": None, "seguindo": None, "posts": None, "raw": desc}
-    m = re.search(r"([\d.,]+[KkMm]?)\s*Followers", desc, re.I)
-    if m:
-        result["seguidores"] = parse_number(m.group(1))
-    m = re.search(r"([\d.,]+[KkMm]?)\s*Following", desc, re.I)
-    if m:
-        result["seguindo"] = parse_number(m.group(1))
-    m = re.search(r"([\d.,]+[KkMm]?)\s*Posts", desc, re.I)
-    if m:
-        result["posts"] = parse_number(m.group(1))
+    for key, patterns in (
+        ("seguidores", (r"([\d.,]+[KkMm]?)\s*Followers", r"([\d.,]+[KkMm]?)\s*followers", r"([\d.,]+[KkMm]?)\s*seguidores")),
+        ("seguindo", (r"([\d.,]+[KkMm]?)\s*Following", r"([\d.,]+[KkMm]?)\s*following", r"([\d.,]+[KkMm]?)\s*seguindo")),
+        ("posts", (r"([\d.,]+[KkMm]?)\s*Posts", r"([\d.,]+[KkMm]?)\s*posts", r"([\d.,]+[KkMm]?)\s*publicações", r"([\d.,]+[KkMm]?)\s*publicacoes")),
+    ):
+        if result[key] is not None:
+            continue
+        for pat in patterns:
+            m = re.search(pat, desc, re.I)
+            if m:
+                result[key] = parse_number(m.group(1))
+                break
     return result
 
 
@@ -257,18 +259,43 @@ def openrouter_extract(
     }
 
 
-def collect_metrics(page: dict, api_key: str | None, model: str, cache: dict[int, dict] | None = None) -> dict:
+def _facebook_fetch_urls(page: dict) -> list[str]:
+    urls: list[str] = []
     fb_id = page.get("facebook_id")
+    if fb_id:
+        urls.append(f"https://www.facebook.com/{fb_id}")
+    post = page.get("facebook_post") or ""
+    if "facebook.com/" in post and post not in urls:
+        urls.append(post)
+    return urls
+
+
+def _fetch_facebook_metrics(page: dict) -> dict:
+    fb = {"curtidas": None, "falando_sobre": None}
+    for url in _facebook_fetch_urls(page):
+        desc = fetch_og_description(url)
+        if not desc:
+            continue
+        parsed = parse_facebook(desc)
+        for key in ("curtidas", "falando_sobre"):
+            if fb.get(key) is None and parsed.get(key) is not None:
+                fb[key] = parsed[key]
+        if fb.get("curtidas") is not None:
+            break
+    return fb
+
+
+def collect_metrics(page: dict, api_key: str | None, model: str, cache: dict[int, dict] | None = None) -> dict:
+    from instagram_scraper import InstagramScraper
+
     ig_handle = page["instagram_handle"]
-
-    fb_url = f"https://www.facebook.com/{fb_id}" if fb_id else None
     ig_url = f"https://www.instagram.com/{ig_handle}/"
+    fb_urls = _facebook_fetch_urls(page)
+    fb_url = fb_urls[0] if fb_urls else None
 
-    fb_desc = fetch_og_description(fb_url) if fb_url else None
     ig_desc = fetch_og_description(ig_url)
-
-    fb = parse_facebook(fb_desc) if fb_desc else {}
     ig = parse_instagram(ig_desc) if ig_desc else {}
+    fb = _fetch_facebook_metrics(page)
     source = "http"
 
     if ig.get("seguidores") is None:
@@ -279,16 +306,16 @@ def collect_metrics(page: dict, api_key: str | None, model: str, cache: dict[int
         if api_ig.get("seguidores") is not None:
             source = "api"
 
-    needs_ai = (
-        api_key
-        and (
-            (fb_url and fb.get("curtidas") is None)
-            or ig.get("seguidores") is None
-        )
-    )
+    if ig.get("seguidores") is None:
+        followers = InstagramScraper(delay=0.3).fetch_profile_followers(ig_handle)
+        if followers is not None:
+            ig["seguidores"] = followers
+            source = "scraper" if source == "http" else source
+
+    needs_ai = api_key and (fb.get("curtidas") is None or ig.get("seguidores") is None)
 
     if needs_ai:
-        print(f"  → OpenRouter ({model}) para {page['name']}...")
+        print(f"  -> OpenRouter ({model}) para {page['name']}...")
         try:
             ai = openrouter_extract(api_key, model, page["name"], fb_url, ig_url)
             if fb.get("curtidas") is None:
@@ -1494,6 +1521,12 @@ def regenerate_html_only() -> int:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
     if "--html-only" in sys.argv:
         return regenerate_html_only()
     load_dotenv(ENV_PATH)

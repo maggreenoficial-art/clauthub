@@ -768,7 +768,7 @@ def collect_page_engagement(
     handle = page.get("instagram_handle", "")
     post_url = page.get("instagram_post")
 
-    print(f"  → Scrape Instagram @{handle}...")
+    print(f"  -> Scrape Instagram @{handle}...")
     profile = scraper.scrape_profile(
         handle=handle,
         fallback_post_url=post_url,
@@ -1468,6 +1468,70 @@ def _persist_engajamento(data: dict, updated_at: str, model: str) -> dict:
     return data
 
 
+def _recompute_engajamento_resumo(data: dict) -> dict:
+    pages = data.get("paginas") or []
+    pages.sort(key=lambda x: x.get("engajamento_total", 0), reverse=True)
+    _mark_hot_pages(pages)
+    sum_views = sum(r.get("visualizacoes", 0) for r in pages)
+    sum_likes = sum(r.get("curtidas", 0) for r in pages)
+    sum_comments = sum(r.get("comentarios", 0) for r in pages)
+    sum_posts = sum(r.get("publicacoes_coletadas", 0) for r in pages)
+    total = sum_views + sum_likes + sum_comments
+    media = total // len(pages) if pages else 0
+    hot_count = sum(1 for r in pages if r.get("hot"))
+    top5 = [r for r in pages if r.get("engajamento_total", 0) > 0][:5]
+    data["paginas"] = pages
+    data["top5"] = top5
+    data["top_posts"] = _build_top_posts(pages, limit=TOP_POSTS_GLOBAL)
+    data["max_engajamento"] = top5[0]["engajamento_total"] if top5 else 1
+    data["resumo"] = {
+        **(data.get("resumo") or {}),
+        "visualizacoes_total": sum_views,
+        "visualizacoes_fmt": _fmt_num(sum_views),
+        "curtidas_total": sum_likes,
+        "curtidas_fmt": _fmt_num(sum_likes),
+        "comentarios_total": sum_comments,
+        "comentarios_fmt": _fmt_num(sum_comments),
+        "publicacoes_coletadas": sum_posts,
+        "engajamento_total": total,
+        "engajamento_fmt": _fmt_num(total),
+        "paginas": len(pages),
+        "paginas_hot": hot_count,
+        "media_por_pagina": media,
+        "media_fmt": _fmt_num(media),
+    }
+    return data
+
+
+def _refresh_stale_engajamento_pages(
+    data: dict,
+    pages: list,
+    api_key: str | None,
+    model: str,
+) -> dict:
+    """Re-coleta páginas com handle errado ou sem publicações no cache."""
+    hub_by_name = {p["name"]: p for p in pages}
+    scraper = InstagramScraper(delay=REQUEST_DELAY)
+    rescraped = False
+    for row in data.get("paginas") or []:
+        hub = hub_by_name.get(row["nome"])
+        if not hub:
+            continue
+        expected = hub["instagram_handle"].lstrip("@")
+        current = row.get("handle", "").lstrip("@")
+        if current == expected and row.get("publicacoes_coletadas", 0) > 0:
+            continue
+        print(
+            f"  [re-scrape] {row['nome']} (@{expected}) — handle ou cache desatualizado",
+            file=sys.stderr,
+        )
+        fresh = collect_page_engagement(hub, scraper, api_key, model)
+        row.clear()
+        row.update(fresh)
+        rescraped = True
+    return _recompute_engajamento_resumo(data) if rescraped else data
+
+
 def update_engajamento_daily(
     pages: list,
     all_metrics: list,
@@ -1479,6 +1543,7 @@ def update_engajamento_daily(
     cached = load_engajamento_cache()
     if cached and (cached.get("resumo") or {}).get("publicacoes_coletadas", 0) >= 50:
         data = _normalize_engajamento_data(dict(cached))
+        data = _refresh_stale_engajamento_pages(data, pages, api_key, model)
         print(
             f"  [diário] Engajamento via cache: {data['resumo']['publicacoes_coletadas']} publicações",
             file=sys.stderr,
@@ -1509,6 +1574,7 @@ def update_and_save(
 ) -> dict:
     data = compute_engajamento(pages, all_metrics, api_key, model)
     data = _prefer_engajamento_cache(data)
+    data = _refresh_stale_engajamento_pages(data, pages, api_key, model)
     save_engajamento_cache(data)
 
     if api_key:
