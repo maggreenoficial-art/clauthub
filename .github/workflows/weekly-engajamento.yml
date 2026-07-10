@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Evita conflito de push com a Atualizacao Diaria
+concurrency:
+  group: clauthub-metrics
+  cancel-in-progress: false
+
 jobs:
   engajamento-completo:
     runs-on: ubuntu-latest

@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Evita conflito de push com o Engajamento Completo Semanal
+concurrency:
+  group: clauthub-metrics
+  cancel-in-progress: false
+
 jobs:
   atualizar:
     runs-on: ubuntu-latest
