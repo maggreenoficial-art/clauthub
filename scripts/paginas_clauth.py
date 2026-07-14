@@ -244,18 +244,39 @@ def normalize_data(data: dict) -> dict:
     return data
 
 
-def prefer_cache(data: dict) -> dict:
+def prefer_cache(data: dict) -> tuple[dict, bool]:
+    """Retorna (dados, usou_cache_de_posts)."""
     cached = load_cache()
     if not cached:
-        return normalize_data(data)
+        return normalize_data(data), False
     cur = (data.get("resumo") or {}).get("publicacoes_coletadas", 0)
     prev = (cached.get("resumo") or {}).get("publicacoes_coletadas", 0)
     if prev > cur:
         print(f"  [cache] Páginas Clauth: usando cache ({prev} pub.) em vez de {cur}", file=sys.stderr)
         merged = dict(cached)
         merged["max_posts_por_pagina"] = data.get("max_posts_por_pagina", MAX_POSTS_LABEL)
-        return normalize_data(merged)
-    return normalize_data(data)
+        # Preserva seguidores frescos da coleta atual (posts falharam, mas perfil pode ter ok).
+        fresh_by_handle = {
+            (p.get("handle") or "").lstrip("@").lower(): p
+            for p in (data.get("paginas") or [])
+            if (p.get("seguidores") or 0) > 0
+        }
+        if fresh_by_handle:
+            for row in merged.get("paginas") or []:
+                key = (row.get("handle") or "").lstrip("@").lower()
+                fresh = fresh_by_handle.get(key)
+                if not fresh:
+                    continue
+                row["seguidores"] = fresh["seguidores"]
+                row["seguidores_fmt"] = fresh.get("seguidores_fmt") or _fmt_num(fresh["seguidores"])
+                if fresh.get("seguidores_source"):
+                    row["seguidores_source"] = fresh["seguidores_source"]
+            total = sum(r.get("seguidores") or 0 for r in merged.get("paginas") or [])
+            resumo = merged.setdefault("resumo", {})
+            resumo["seguidores_total"] = total
+            resumo["seguidores_fmt"] = _fmt_num(total) if total else "—"
+        return normalize_data(merged), True
+    return normalize_data(data), False
 
 
 def _render_page_block(page: dict, max_posts: int) -> str:
@@ -600,6 +621,9 @@ def update_and_save(api_key: str | None, model: str, updated_at: str) -> dict:
     for p in load_pages():
         print(f"• {p['nome']} (@{p['instagram_handle']})")
     data = compute(api_key, model)
-    data = prefer_cache(data)
+    data, used_cache = prefer_cache(data)
+    if used_cache:
+        print("  [pós-cache] Atualizando seguidores...", file=sys.stderr)
+        data = refresh_followers(data, api_key=api_key, model=model)
     save_cache(data)
     return persist(data, updated_at, model)
