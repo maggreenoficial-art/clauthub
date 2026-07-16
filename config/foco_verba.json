@@ -1,0 +1,34 @@
+{
+  "titulo": "Foco Verba",
+  "descricao": "Páginas prioritárias de investimento Meta Ads — acompanhamento de verba, seguidores e custo por resultado.",
+  "paginas": [
+    {
+      "slug": "giro-baixada",
+      "nome": "Giro da Baixada",
+      "instagram_handle": "girobaixadarj",
+      "hub_name": "Giro Baixada RJ",
+      "segmentacao": "Baixada Fluminense"
+    },
+    {
+      "slug": "alerta-rio",
+      "nome": "Alerta Rio",
+      "instagram_handle": "alertario360",
+      "hub_name": "Alerta Rio 360",
+      "segmentacao": "Rio de Janeiro capital"
+    },
+    {
+      "slug": "campos",
+      "nome": "Campos",
+      "instagram_handle": "radarcampos",
+      "hub_name": "Radar Campos",
+      "segmentacao": "Campos dos Goytacazes e região"
+    },
+    {
+      "slug": "na-pauta",
+      "nome": "Na Pauta",
+      "instagram_handle": "napautarj",
+      "hub_name": "Na Pauta RJ",
+      "segmentacao": "Região Metropolitana: Niterói, São Gonçalo, Itaboraí e Maricá"
+    }
+  ]
+}

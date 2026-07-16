@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clauth Hub — Foco Verba</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      --bg: #000; --surface: #111; --panel: #1a1a1a; --text: #fff; --muted: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.1); --accent: #34d399;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; }
+    a { color: #a5b4fc; text-decoration: none; }
+    .ig-header {
+      position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.25rem 1rem;
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; }
+    .brand { display: flex; align-items: center; gap: 0.5rem; }
+    .brand-icon {
+      width: 28px; height: 28px; border-radius: 8px; background: var(--ig-gradient);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-icon svg { width: 16px; height: 16px; }
+    .brand-name {
+      font-size: 1.1rem; font-weight: 700; background: var(--ig-gradient);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .badge {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.25rem 0.55rem; border-radius: 20px; background: rgba(52,211,153,0.15);
+      border: 1px solid rgba(52,211,153,0.35); color: var(--accent);
+    }
+    .header-title { font-size: 1.35rem; font-weight: 700; }
+    .header-sub { font-size: 0.85rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.45; max-width: 42rem; }
+    .update-pill {
+      display: inline-block; margin-top: 0.75rem; font-size: 0.72rem; color: var(--muted);
+      padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--border);
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0 1.5rem;
+    }
+    @media (min-width: 720px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+    .kpi {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 1rem;
+    }
+    .kpi-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.35rem; }
+    .kpi.highlight .kpi-value { color: var(--accent); }
+    .section-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 0.85rem; }
+    .pages { display: grid; gap: 1rem; }
+    .page-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 1.15rem 1.2rem;
+    }
+    .page-card-head { display: flex; gap: 0.85rem; align-items: flex-start; }
+    .rank {
+      width: 2rem; height: 2rem; border-radius: 10px; display: grid; place-items: center;
+      background: var(--ig-gradient); font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .page-card h2 { font-size: 1.15rem; font-weight: 700; }
+    .handle { font-size: 0.85rem; color: var(--muted); display: inline-block; margin-top: 0.15rem; }
+    .badge-warn {
+      display: inline-block; margin-left: 0.4rem; font-size: 0.65rem; font-weight: 600;
+      padding: 0.15rem 0.45rem; border-radius: 999px; background: rgba(251,191,36,0.15);
+      color: #fbbf24; border: 1px solid rgba(251,191,36,0.35); vertical-align: middle;
+    }
+    .region { font-size: 0.82rem; color: var(--muted); margin: 0.75rem 0 1rem; }
+    .metrics { display: grid; grid-template-columns: 1fr; gap: 0.65rem; }
+    @media (min-width: 640px) { .metrics { grid-template-columns: repeat(3, 1fr); } }
+    .metric {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem;
+    }
+    .metric-label { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .metric-value { font-size: 1.1rem; font-weight: 700; }
+    .metric-value.accent { color: var(--accent); }
+    .ig-link { display: inline-block; margin-top: 0.9rem; font-size: 0.85rem; font-weight: 600; }
+    .back-link { display: inline-block; margin-top: 1.75rem; color: var(--muted); font-size: 0.9rem; }
+    .back-link:hover { color: #fff; }
+    footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 1rem 1rem 2rem; }
+  </style>
+</head>
+<body>
+  <header class="ig-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></div>
+        <span class="brand-name">Clauth Hub</span>
+      </div>
+      <span class="badge">Foco Verba</span>
+    </div>
+    <h1 class="header-title">Foco Verba</h1>
+    <p class="header-sub">Páginas prioritárias de investimento Meta Ads — acompanhamento de verba, seguidores e custo por resultado.</p>
+    <div class="update-pill">Dados coletados diariamente às 08:00 · Última coleta: 16/07/2026 às 08:00</div>
+  </header>
+  <main>
+    <div class="kpi-grid">
+      <div class="kpi highlight"><div class="kpi-label">Verba total</div><div class="kpi-value">R$ 20.729,65</div></div>
+      <div class="kpi"><div class="kpi-label">Páginas foco</div><div class="kpi-value">4</div></div>
+      <div class="kpi"><div class="kpi-label">Seguidores</div><div class="kpi-value">48.094</div></div>
+      <div class="kpi"><div class="kpi-label">Custo médio</div><div class="kpi-value">R$ 0,43</div></div>
+    </div>
+    <p class="section-title">Páginas prioritárias</p>
+    <div class="pages">
+    <article class="page-card" id="na-pauta">
+      <div class="page-card-head">
+        <span class="rank">#1</span>
+        <div>
+          <h2>Na Pauta</h2>
+          <a class="handle" href="https://www.instagram.com/napautarj/" target="_blank" rel="noopener">@napautarj</a>
+          
+        </div>
+      </div>
+      <p class="region">Região Metropolitana: Niterói, São Gonçalo, Itaboraí e Maricá</p>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 9.122,37</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Seguidores atuais</span>
+          <span class="metric-value">22.000</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,41</span>
+        </div>
+      </div>
+      <a class="ig-link" href="https://www.instagram.com/napautarj/" target="_blank" rel="noopener">Abrir no Instagram →</a>
+    </article>
+    <article class="page-card" id="giro-baixada">
+      <div class="page-card-head">
+        <span class="rank">#2</span>
+        <div>
+          <h2>Giro da Baixada</h2>
+          <a class="handle" href="https://www.instagram.com/girobaixadarj/" target="_blank" rel="noopener">@girobaixadarj</a>
+          
+        </div>
+      </div>
+      <p class="region">Baixada Fluminense</p>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 8.182,33</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Seguidores atuais</span>
+          <span class="metric-value">9.652</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,85</span>
+        </div>
+      </div>
+      <a class="ig-link" href="https://www.instagram.com/girobaixadarj/" target="_blank" rel="noopener">Abrir no Instagram →</a>
+    </article>
+    <article class="page-card" id="alerta-rio">
+      <div class="page-card-head">
+        <span class="rank">#3</span>
+        <div>
+          <h2>Alerta Rio</h2>
+          <a class="handle" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">@alertario360</a>
+          
+        </div>
+      </div>
+      <p class="region">Rio de Janeiro capital</p>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 3.424,95</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Seguidores atuais</span>
+          <span class="metric-value">11.000</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,31</span>
+        </div>
+      </div>
+      <a class="ig-link" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">Abrir no Instagram →</a>
+    </article>
+    <article class="page-card" id="campos">
+      <div class="page-card-head">
+        <span class="rank">#4</span>
+        <div>
+          <h2>Campos</h2>
+          <a class="handle" href="https://www.instagram.com/radarcampos/" target="_blank" rel="noopener">@radarcampos</a>
+          <span class="badge-warn">Verba a cadastrar</span>
+        </div>
+      </div>
+      <p class="region">Campos dos Goytacazes e região</p>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Seguidores atuais</span>
+          <span class="metric-value">5.442</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">—</span>
+        </div>
+      </div>
+      <a class="ig-link" href="https://www.instagram.com/radarcampos/" target="_blank" rel="noopener">Abrir no Instagram →</a>
+    </article></div>
+    <a class="back-link" href="/">← Voltar ao acompanhamento</a>
+  </main>
+  <footer>Clauth Hub · Foco Verba · Atualização automática com o hub</footer>
+</body>
+</html>
