@@ -376,25 +376,9 @@ class InstagramScraper:
         return None
 
     def fetch_profile_followers(self, handle: str) -> int | None:
-        """Retorna seguidores: og:description → API (com retry) → HTML embutido."""
+        """Retorna seguidores: API (exato) → HTML embutido → og:description (pode arredondar)."""
         handle = handle.lstrip("@")
         profile_url = f"https://www.instagram.com/{handle}/"
-
-        try:
-            r = requests.get(
-                profile_url,
-                headers={"User-Agent": BOT_UA},
-                timeout=25,
-                allow_redirects=True,
-            )
-            if r.status_code == 200:
-                m = re.search(r'og:description" content="([^"]+)"', r.text)
-                if m:
-                    count = _parse_follower_count_from_text(htmlmod.unescape(m.group(1)))
-                    if count is not None:
-                        return count
-        except requests.RequestException:
-            pass
 
         for attempt in range(3):
             self._sleep()
@@ -426,7 +410,24 @@ class InstagramScraper:
         if html_page:
             count = _parse_follower_count_from_html(html_page)
             if count is not None:
-                return count
+                return int(count)
+
+        try:
+            r = requests.get(
+                profile_url,
+                headers={"User-Agent": BOT_UA},
+                timeout=25,
+                allow_redirects=True,
+            )
+            if r.status_code == 200:
+                m = re.search(r'og:description" content="([^"]+)"', r.text)
+                if m:
+                    count = _parse_follower_count_from_text(htmlmod.unescape(m.group(1)))
+                    if count is not None:
+                        return count
+        except requests.RequestException:
+            pass
+
         return None
 
     def fetch_posts_feed(self, handle: str, max_posts: int = DEFAULT_MAX_POSTS) -> list[PostMetrics]:

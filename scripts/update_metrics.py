@@ -191,12 +191,11 @@ def parse_instagram(desc: str) -> dict:
 
 
 def format_count(n: int | None) -> str:
+    """Formata contagens: exato até 999.999; a partir de 1M usa abreviação."""
     if n is None:
         return "—"
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
-    if n >= 10_000:
-        return f"{n / 1_000:.1f}K".replace(".0K", "K")
     return f"{n:,}".replace(",", ".")
 
 
