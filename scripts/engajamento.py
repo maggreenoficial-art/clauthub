@@ -1291,7 +1291,7 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
     <p class="header-meta">Métricas consolidadas das publicações recentes de cada perfil.</p>
     <div class="info-banner">
       <strong>Como funciona:</strong> o sistema analisa automaticamente as <strong>últimas {max_posts} publicações</strong> de cada página no Instagram
-      e soma visualizações, curtidas e comentários para medir o engajamento real.
+      <strong>(excluindo as fixadas)</strong>, para medir o engajamento real sem posts que já estouraram no topo do perfil.
       Atualização diária às 08:00 · {r["publicacoes_coletadas"]} publicações analisadas nesta coleta.
     </div>
     <div class="header-actions">
@@ -1320,14 +1320,14 @@ def render_engajamento_html(data: dict, updated_at: str) -> str:
       <div class="kpi-card"><div class="kpi-label">Comentários</div><div class="kpi-value">{r["comentarios_fmt"]}</div></div>
     </div>
     <p class="section-title">Top 5 páginas{f' · {hot_count} em tração 🔥' if hot_count else ''}</p>
-    <div class="panel"><h3>Maior engajamento nas últimas {max_posts} publicações</h3>{top_html}</div>
+    <div class="panel"><h3>Maior engajamento nas últimas {max_posts} publicações (sem fixadas)</h3>{top_html}</div>
     <p class="section-title">O que está funcionando · top publicações</p>
     <div class="panel">
       <h3>Publicações com maior engajamento para análise de conteúdo</h3>
       <p class="panel-desc">Clique na miniatura ou no link para abrir no Instagram e ver o que performou melhor.</p>
       <div class="posts-grid">{top_posts_html}</div>
     </div>
-    <p class="section-title">Análise por página · últimas {max_posts} publicações</p>
+    <p class="section-title">Análise por página · últimas {max_posts} publicações (sem fixadas)</p>
     <div class="panel page-panel">
       <h3>Verifique o que está funcionando em cada perfil</h3>
       <p class="panel-desc">Expanda cada página para ver todas as publicações analisadas, da que mais engajou à que menos. Use os links para abrir no Instagram e identificar a vertente de conteúdo.</p>

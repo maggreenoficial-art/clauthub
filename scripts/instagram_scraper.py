@@ -35,10 +35,29 @@ class PostMetrics:
     compartilhamentos: int = 0
     thumbnail: str = ""
     source: str = "http"
+    pinned: bool = False
 
     @property
     def total(self) -> int:
         return self.visualizacoes + self.curtidas + self.comentarios + self.compartilhamentos
+
+
+def _is_pinned_media(item: dict) -> bool:
+    """Detecta publicação fixada no grid / aba de reels do Instagram."""
+    if not item:
+        return False
+    if item.get("is_pinned") is True:
+        return True
+    for key in ("timeline_pinned_user_ids", "clips_tab_pinned_user_ids", "pinned_for_users"):
+        val = item.get(key)
+        if isinstance(val, list) and len(val) > 0:
+            return True
+        if isinstance(val, dict) and val:
+            return True
+    node = item.get("node")
+    if isinstance(node, dict):
+        return _is_pinned_media(node)
+    return False
 
 
 @dataclass
@@ -474,6 +493,12 @@ class InstagramScraper:
                     code = item.get("code") or item.get("shortcode")
                     if not code:
                         continue
+                    if _is_pinned_media(item):
+                        print(
+                            f"  [skip] @{handle} post fixado /{code} (excluído do engajamento)",
+                            file=sys.stderr,
+                        )
+                        continue
                     metrics = self._metrics_from_feed_item(item)
                     post = PostMetrics(
                         shortcode=code,
@@ -484,6 +509,7 @@ class InstagramScraper:
                         compartilhamentos=metrics["compartilhamentos"],
                         thumbnail=_thumbnail_from_feed_item(item),
                         source="feed",
+                        pinned=False,
                     )
                     if enriched < ENRICH_VIEWS_CAP and (not post.visualizacoes or not post.thumbnail):
                         post = self._enrich_post_views(post)
@@ -491,6 +517,7 @@ class InstagramScraper:
                     posts.append(post)
                     if len(posts) >= max_posts:
                         break
+                # Continua paginando se ainda faltam posts não-fixados
                 if len(posts) >= max_posts or not payload.get("more_available"):
                     break
                 next_max_id = payload.get("next_max_id")
@@ -536,10 +563,16 @@ class InstagramScraper:
                     .get("edges", [])
                 )
                 posts: list[PostMetrics] = []
-                for edge in edges[:max_posts]:
+                for edge in edges:
                     node = edge.get("node", {})
                     code = node.get("shortcode")
                     if not code:
+                        continue
+                    if _is_pinned_media(node) or _is_pinned_media(edge):
+                        print(
+                            f"  [skip] @{handle} post fixado /{code} (excluído do engajamento)",
+                            file=sys.stderr,
+                        )
                         continue
                     post = PostMetrics(
                         shortcode=code,
@@ -550,11 +583,14 @@ class InstagramScraper:
                         compartilhamentos=0,
                         thumbnail=node.get("thumbnail_src") or node.get("display_url") or "",
                         source="api",
+                        pinned=False,
                     )
                     if not post.visualizacoes or not post.thumbnail:
                         post = self._enrich_post_views(post)
                     posts.append(post)
                     self._sleep()
+                    if len(posts) >= max_posts:
+                        break
                 return posts
             except (requests.RequestException, json.JSONDecodeError, KeyError) as exc:
                 print(f"  [aviso] API Instagram @{handle} (tentativa {attempt + 1}): {exc}", file=sys.stderr)
@@ -636,7 +672,7 @@ class InstagramScraper:
         model: str = "google/gemini-2.5-flash",
     ) -> ProfileEngagement:
         """
-        Raspa engajamento das publicações recentes do perfil.
+        Raspa engajamento das publicações recentes do perfil (exclui fixadas).
         1) Feed paginado (50 posts) → 2) API web_profile_info → 3) post configurado → 4) IA.
         """
         handle = handle.lstrip("@")
@@ -646,11 +682,12 @@ class InstagramScraper:
         if max_posts > 12:
             posts = self.fetch_posts_feed(handle, max_posts)
             if posts:
-                result.publicacoes = posts
+                result.publicacoes = [p for p in posts if not p.pinned][:max_posts]
                 result.source = "feed"
                 return result
 
         posts = self.fetch_posts_api(handle, min(max_posts, 12))
+        posts = [p for p in posts if not p.pinned]
         if posts and len(posts) >= max_posts:
             result.publicacoes = posts[:max_posts]
             result.source = "api"
@@ -661,9 +698,10 @@ class InstagramScraper:
             if feed_posts:
                 seen = {p.shortcode for p in posts}
                 for p in feed_posts:
-                    if p.shortcode not in seen:
-                        posts.append(p)
-                        seen.add(p.shortcode)
+                    if p.pinned or p.shortcode in seen:
+                        continue
+                    posts.append(p)
+                    seen.add(p.shortcode)
                     if len(posts) >= max_posts:
                         break
 
