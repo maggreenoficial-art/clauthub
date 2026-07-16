@@ -1580,7 +1580,7 @@ def main() -> int:
     try:
         foco_payload = update_foco_verba(updated_at)
         print(f"Páginas foco: {foco_payload['resumo']['paginas']}")
-        print(f"Verba total: {foco_payload['resumo']['investimento_fmt']}")
+        print(f"Seguidores foco: {foco_payload['resumo']['seguidores_fmt']}")
     except Exception as exc:
         print(f"[erro] Foco Verba não atualizado: {exc}", file=sys.stderr)
 
