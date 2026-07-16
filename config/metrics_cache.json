@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-16T15:45:05.495791-03:00",
+  "updated_at": "2026-07-16T15:53:25.948872-03:00",
   "pages": {
     "1": {
       "id": 1,
@@ -264,6 +264,25 @@
         "seguidores_fmt": "13.000",
         "seguindo_fmt": "979",
         "posts_fmt": "838"
+      },
+      "source": "http"
+    },
+    "15": {
+      "id": 15,
+      "name": "Acorda Itaperuna",
+      "facebook": {
+        "curtidas": null,
+        "falando_sobre": null,
+        "curtidas_fmt": "—",
+        "falando_fmt": "—"
+      },
+      "instagram": {
+        "seguidores": 4591,
+        "seguindo": 538,
+        "posts": 425,
+        "seguidores_fmt": "4.591",
+        "seguindo_fmt": "538",
+        "posts_fmt": "425"
       },
       "source": "http"
     }
