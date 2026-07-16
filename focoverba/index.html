@@ -47,6 +47,7 @@
     .kpi-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0 1.5rem;
     }
+    @media (min-width: 720px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
     .kpi {
       background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 1rem;
     }
@@ -95,13 +96,15 @@
       <span class="badge">Foco Verba</span>
     </div>
     <h1 class="header-title">Foco Verba</h1>
-    <p class="header-sub">Páginas prioritárias — acompanhamento de seguidores no Instagram.</p>
+    <p class="header-sub">Páginas prioritárias de investimento Meta Ads — acompanhamento de verba, seguidores e custo por resultado.</p>
     <div class="update-pill">Dados coletados diariamente às 08:00 · Última coleta: 16/07/2026 às 08:00</div>
   </header>
   <main>
     <div class="kpi-grid">
-      <div class="kpi highlight"><div class="kpi-label">Páginas foco</div><div class="kpi-value">4</div></div>
+      <div class="kpi highlight"><div class="kpi-label">Verba total</div><div class="kpi-value">R$ 20.729,65</div></div>
+      <div class="kpi"><div class="kpi-label">Páginas foco</div><div class="kpi-value">4</div></div>
       <div class="kpi"><div class="kpi-label">Seguidores</div><div class="kpi-value">48.094</div></div>
+      <div class="kpi"><div class="kpi-label">Custo médio</div><div class="kpi-value">R$ 0,43</div></div>
     </div>
     <p class="section-title">Páginas prioritárias</p>
     <div class="pages">
@@ -111,50 +114,77 @@
         <div>
           <h2>Na Pauta</h2>
           <a class="handle" href="https://www.instagram.com/napautarj/" target="_blank" rel="noopener">@napautarj</a>
+          
         </div>
       </div>
       <p class="region">Região Metropolitana: Niterói, São Gonçalo, Itaboraí e Maricá</p>
       <div class="metrics">
         <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 9.122,37</span>
+        </div>
+        <div class="metric">
           <span class="metric-label">Seguidores atuais</span>
-          <span class="metric-value accent">22.000</span>
+          <span class="metric-value">22.000</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,41</span>
         </div>
       </div>
       <a class="ig-link" href="https://www.instagram.com/napautarj/" target="_blank" rel="noopener">Abrir no Instagram →</a>
     </article>
-    <article class="page-card" id="alerta-rio">
+    <article class="page-card" id="giro-baixada">
       <div class="page-card-head">
         <span class="rank">#2</span>
         <div>
-          <h2>Alerta Rio</h2>
-          <a class="handle" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">@alertario360</a>
-        </div>
-      </div>
-      <p class="region">Rio de Janeiro capital</p>
-      <div class="metrics">
-        <div class="metric">
-          <span class="metric-label">Seguidores atuais</span>
-          <span class="metric-value accent">11.000</span>
-        </div>
-      </div>
-      <a class="ig-link" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">Abrir no Instagram →</a>
-    </article>
-    <article class="page-card" id="giro-baixada">
-      <div class="page-card-head">
-        <span class="rank">#3</span>
-        <div>
           <h2>Giro da Baixada</h2>
           <a class="handle" href="https://www.instagram.com/girobaixadarj/" target="_blank" rel="noopener">@girobaixadarj</a>
+          
         </div>
       </div>
       <p class="region">Baixada Fluminense</p>
       <div class="metrics">
         <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 8.182,33</span>
+        </div>
+        <div class="metric">
           <span class="metric-label">Seguidores atuais</span>
-          <span class="metric-value accent">9.652</span>
+          <span class="metric-value">9.652</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,85</span>
         </div>
       </div>
       <a class="ig-link" href="https://www.instagram.com/girobaixadarj/" target="_blank" rel="noopener">Abrir no Instagram →</a>
+    </article>
+    <article class="page-card" id="alerta-rio">
+      <div class="page-card-head">
+        <span class="rank">#3</span>
+        <div>
+          <h2>Alerta Rio</h2>
+          <a class="handle" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">@alertario360</a>
+          
+        </div>
+      </div>
+      <p class="region">Rio de Janeiro capital</p>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">R$ 3.424,95</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Seguidores atuais</span>
+          <span class="metric-value">11.000</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">R$ 0,31</span>
+        </div>
+      </div>
+      <a class="ig-link" href="https://www.instagram.com/alertario360/" target="_blank" rel="noopener">Abrir no Instagram →</a>
     </article>
     <article class="page-card" id="campos">
       <div class="page-card-head">
@@ -162,13 +192,22 @@
         <div>
           <h2>Campos</h2>
           <a class="handle" href="https://www.instagram.com/radarcampos/" target="_blank" rel="noopener">@radarcampos</a>
+          <span class="badge-warn">Verba a cadastrar</span>
         </div>
       </div>
       <p class="region">Campos dos Goytacazes e região</p>
       <div class="metrics">
         <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">—</span>
+        </div>
+        <div class="metric">
           <span class="metric-label">Seguidores atuais</span>
-          <span class="metric-value accent">5.442</span>
+          <span class="metric-value">5.442</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">—</span>
         </div>
       </div>
       <a class="ig-link" href="https://www.instagram.com/radarcampos/" target="_blank" rel="noopener">Abrir no Instagram →</a>

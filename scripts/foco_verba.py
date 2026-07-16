@@ -111,7 +111,9 @@ def compute(config: dict | None = None) -> dict:
     followers = _load_followers_by_handle()
 
     paginas_out = []
+    total_investimento = 0.0
     total_seguidores = 0
+    com_verba = 0
 
     for p in cfg["paginas"]:
         handle = p["instagram_handle"].lstrip("@").lower()
@@ -124,6 +126,26 @@ def compute(config: dict | None = None) -> dict:
             if seguidores is not None:
                 seguidores = int(seguidores)
 
+        investimento = p.get("investimento")
+        if investimento is None and rel_live.get("investimento") is not None:
+            investimento = float(rel_live["investimento"])
+        elif investimento is None and rel_cfg.get("investimento") is not None:
+            # Sem relatório live: usa base do config (sem rateio extra)
+            investimento = float(rel_cfg["investimento"])
+            seg_rel = rel_cfg.get("seguidores_relatorio")
+            if seg_rel and seguidores and int(seg_rel) > 0:
+                investimento = round(investimento * max(seguidores / int(seg_rel), 1.0), 2)
+
+        custo = None
+        if investimento is not None:
+            investimento = float(investimento)
+            if seguidores:
+                custo = round(investimento / seguidores, 2)
+            elif rel_live.get("custo_resultado") is not None:
+                custo = float(rel_live["custo_resultado"])
+            com_verba += 1
+            total_investimento += investimento
+
         if seguidores:
             total_seguidores += seguidores
 
@@ -135,19 +157,30 @@ def compute(config: dict | None = None) -> dict:
             "instagram_handle": handle,
             "instagram_url": f"https://www.instagram.com/{handle}/",
             "segmentacao": p.get("segmentacao") or rel_cfg.get("segmentacao") or "",
+            "investimento": investimento,
+            "investimento_fmt": _fmt_brl(investimento),
             "seguidores": seguidores,
             "seguidores_fmt": _fmt_num(seguidores),
+            "custo_resultado": custo,
+            "custo_fmt": _fmt_cost(custo),
+            "tem_verba": investimento is not None,
         })
 
-    paginas_out.sort(key=lambda x: x["seguidores"] or 0, reverse=True)
+    paginas_out.sort(key=lambda x: x["investimento"] or 0, reverse=True)
+    custo_medio = total_investimento / total_seguidores if total_seguidores and total_investimento else None
 
     return {
         "titulo": cfg.get("titulo", "Foco Verba"),
         "descricao": cfg.get("descricao", ""),
         "resumo": {
             "paginas": len(paginas_out),
+            "com_verba": com_verba,
+            "investimento_total": round(total_investimento, 2),
+            "investimento_fmt": _fmt_brl(total_investimento) if total_investimento else "—",
             "seguidores_total": total_seguidores,
             "seguidores_fmt": _fmt_num(total_seguidores),
+            "custo_medio": custo_medio,
+            "custo_medio_fmt": _fmt_cost(custo_medio),
         },
         "paginas": paginas_out,
     }
@@ -157,6 +190,9 @@ def render_html(data: dict, updated_at: str) -> str:
     resumo = data["resumo"]
     cards = ""
     for i, p in enumerate(data["paginas"], 1):
+        verba_note = "" if p["tem_verba"] else '<span class="badge-warn">Verba a cadastrar</span>'
+        custo_html = p["custo_fmt"] if p["tem_verba"] else "—"
+        inv_html = p["investimento_fmt"] if p["tem_verba"] else "—"
         cards += f"""
     <article class="page-card" id="{html.escape(p['slug'])}">
       <div class="page-card-head">
@@ -164,13 +200,22 @@ def render_html(data: dict, updated_at: str) -> str:
         <div>
           <h2>{html.escape(p['nome'])}</h2>
           <a class="handle" href="{html.escape(p['instagram_url'])}" target="_blank" rel="noopener">{html.escape(p['instagram'])}</a>
+          {verba_note}
         </div>
       </div>
       <p class="region">{html.escape(p['segmentacao'] or '—')}</p>
       <div class="metrics">
         <div class="metric">
+          <span class="metric-label">Verba (investimento)</span>
+          <span class="metric-value accent">{inv_html}</span>
+        </div>
+        <div class="metric">
           <span class="metric-label">Seguidores atuais</span>
-          <span class="metric-value accent">{html.escape(p['seguidores_fmt'])}</span>
+          <span class="metric-value">{html.escape(p['seguidores_fmt'])}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo / seguidor</span>
+          <span class="metric-value">{custo_html}</span>
         </div>
       </div>
       <a class="ig-link" href="{html.escape(p['instagram_url'])}" target="_blank" rel="noopener">Abrir no Instagram →</a>
@@ -225,6 +270,7 @@ def render_html(data: dict, updated_at: str) -> str:
     .kpi-grid {{
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 1rem 0 1.5rem;
     }}
+    @media (min-width: 720px) {{ .kpi-grid {{ grid-template-columns: repeat(4, 1fr); }} }}
     .kpi {{
       background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 1rem;
     }}
@@ -278,8 +324,10 @@ def render_html(data: dict, updated_at: str) -> str:
   </header>
   <main>
     <div class="kpi-grid">
-      <div class="kpi highlight"><div class="kpi-label">Páginas foco</div><div class="kpi-value">{resumo['paginas']}</div></div>
+      <div class="kpi highlight"><div class="kpi-label">Verba total</div><div class="kpi-value">{html.escape(resumo['investimento_fmt'])}</div></div>
+      <div class="kpi"><div class="kpi-label">Páginas foco</div><div class="kpi-value">{resumo['paginas']}</div></div>
       <div class="kpi"><div class="kpi-label">Seguidores</div><div class="kpi-value">{html.escape(resumo['seguidores_fmt'])}</div></div>
+      <div class="kpi"><div class="kpi-label">Custo médio</div><div class="kpi-value">{html.escape(resumo['custo_medio_fmt'])}</div></div>
     </div>
     <p class="section-title">Páginas prioritárias</p>
     <div class="pages">{cards}</div>
@@ -314,5 +362,5 @@ if __name__ == "__main__":
     label = collection_label(datetime.now(COLLECTION_TZ))
     out = update_and_save(label)
     print(f"Páginas: {out['resumo']['paginas']}")
-    print(f"Seguidores: {out['resumo']['seguidores_fmt']}")
+    print(f"Verba total: {out['resumo']['investimento_fmt']}")
     print(f"HTML: {HTML_PATH}")
