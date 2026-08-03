@@ -18,6 +18,9 @@
     { "nome": "Jacarepaguá Agora", "instagram_handle": "jacarepagua_agora", "investimento": 1493.38, "seguidores_relatorio": 7215, "segmentacao": "Jacarepaguá e bairros próximos" },
     { "nome": "Macaé Acontece", "instagram_handle": "macaeacontece", "investimento": 1267.41, "seguidores_relatorio": 18200, "segmentacao": "Macaé e região" },
     { "nome": "Baixada Acontece", "instagram_handle": "baixadaacontece", "investimento": 1232.59, "seguidores_relatorio": 17700, "segmentacao": "Baixada Fluminense" },
-    { "nome": "Tá Rolando nos Lagos", "instagram_handle": "tarolandolagos", "investimento": 980.76, "seguidores_relatorio": 3444, "segmentacao": "Região dos Lagos", "instagram_handle_alt": "tarolandonoslagos" }
+    { "nome": "Tá Rolando nos Lagos", "instagram_handle": "tarolandolagos", "investimento": 980.76, "seguidores_relatorio": 3444, "segmentacao": "Região dos Lagos", "instagram_handle_alt": "tarolandonoslagos" },
+    { "nome": "Angra do Povo", "instagram_handle": "angradopovo", "investimento": 1950.00, "seguidores_relatorio": 9713, "segmentacao": "Angra dos Reis e região" },
+    { "nome": "Portal Zona Sul RJ", "instagram_handle": "portalzonasul.rj", "investimento": 5200.00, "seguidores_relatorio": 15000, "segmentacao": "Zona Sul do Rio de Janeiro" },
+    { "nome": "Leonardo Leão", "instagram_handle": "lleonardoleao", "investimento": 2150.00, "seguidores_relatorio": 34000, "segmentacao": "Rio de Janeiro" }
   ]
 }
