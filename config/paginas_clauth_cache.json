@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-03T10:44:46.281270-03:00",
+  "updated_at": "2026-08-04T10:05:24.216123-03:00",
   "titulo": "Páginas Clauth",
   "max_posts_por_pagina": 50,
   "resumo": {
@@ -4851,7 +4851,7 @@
       "seguidores_fmt": "9.713",
       "hot": false,
       "momentum_fmt": "1.3x",
-      "seguidores_source": "cache"
+      "seguidores_source": "relatorio"
     },
     {
       "nome": "Portal Zona Sul RJ",
@@ -5388,7 +5388,7 @@
       "seguidores_fmt": "15K",
       "hot": false,
       "momentum_fmt": "",
-      "seguidores_source": "cache"
+      "seguidores_source": "relatorio"
     }
   ],
   "top5": [
