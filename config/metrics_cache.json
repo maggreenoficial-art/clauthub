@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-21T13:49:41.639925-03:00",
+  "updated_at": "2026-09-22T12:23:30.027722-03:00",
   "pages": {
     "1": {
       "id": 1,
@@ -11,12 +11,12 @@
         "falando_fmt": "37"
       },
       "instagram": {
-        "seguidores": 11000,
-        "seguindo": 591,
-        "posts": 1206,
-        "seguidores_fmt": "11.000",
-        "seguindo_fmt": "591",
-        "posts_fmt": "1.206"
+        "seguidores": 17000,
+        "seguindo": 597,
+        "posts": 1523,
+        "seguidores_fmt": "17.000",
+        "seguindo_fmt": "597",
+        "posts_fmt": "1.523"
       },
       "source": "http"
     },
